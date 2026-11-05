@@ -51,3 +51,31 @@ h2 { margin: 0 0 8px; font-size: 34px; color: #a5462b; }
 .lead { font-size: 18px; line-height: 1.6; margin: 4px 0 8px; }
 .links { margin: 16px 0 0; font-size: 15px; }
 .links a { color: #a5462b; font-weight: bold; }
+.best { font-weight: bold; color: #a5462b; margin: 0 0 12px; }
+.entry { margin: 10px 0 6px; }
+.entry.hidden { display: none; }
+.newrec { font-size: 22px; font-weight: bold; color: #c0392b; margin: 0 0 8px; }
+.entry-row { display: flex; gap: 8px; justify-content: center; }
+.entry input {
+  font: inherit; font-size: 18px; padding: 8px 12px; width: 100%; max-width: 240px;
+  border: 3px solid #d8c4a4; border-radius: 10px; background: #fff; color: #3a2414;
+  -webkit-user-select: text; user-select: text;
+}
+.entry input:focus { outline: none; border-color: #c0392b; }
+.btn.small { font-size: 18px; padding: 8px 20px; }
+.rank-box { margin: 8px auto 16px; max-width: 360px; }
+.rank-empty { color: #7a5a40; }
+table.ranking { width: 100%; border-collapse: collapse; font-size: 15px; background: #fff; border-radius: 10px; overflow: hidden; }
+.ranking th { background: #a5462b; color: #fff; padding: 4px 8px; font-size: 13px; }
+.ranking td { padding: 4px 8px; border-bottom: 1px solid #f0e4cf; }
+.ranking td:nth-child(2) { text-align: left; }
+.ranking td:last-child { text-align: right; font-weight: bold; }
+.ranking td.place { text-align: center; width: 3em; }
+.ranking tr.me td { background: #fff1b8; font-weight: bold; }
+.entry input { min-width: 0; flex: 1; }
+.btn.small { white-space: nowrap; flex: none; }
+@media (max-width: 480px) {
+  h2 { font-size: 26px; }
+  .score span { font-size: 34px; }
+  .panel { padding: 18px 16px; }
+}

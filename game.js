@@ -3,7 +3,6 @@
   'use strict';
 
   // ===== 基本設定 =====
-  const W = 960, H = 1040;
   const GAME_TIME = 90;      // 秒
   const ANGRY_LIMIT = 5;     // 怒って帰った人数の上限
 
@@ -16,17 +15,32 @@
     { id: 'kazunoko',   name: '数の子',     price: 200, plate: '#e67e22', key: '6' },
     { id: 'iwashi',     name: 'イワシ',     price: 120, plate: '#95a5a6', key: '7' },
     { id: 'miso',       name: '味噌汁',     price: 180, plate: '#8e44ad', key: '8' },
-    { id: 'california', name: 'カリフォルニアロール', price: 200, plate: '#e84393', key: '9' },
+    { id: 'california', name: 'カリフォルニアロール', lines: ['カリフォルニア', 'ロール'], price: 200, plate: '#e84393', key: '9' },
     { id: 'anago',      name: '穴子',       price: 200, plate: '#6d4c41', key: '0' },
   ];
 
-  // ===== レーン（角丸の長方形ループ） =====
-  // 上の直線は左→右、下の直線は右→左に流れる
-  const TRACK = { x1: 150, x2: 810, yTop: 240, yBot: 530, r: 70 };
-  const SEGS = (() => {
+  // ===== レイアウト =====
+  // 横長画面（PC）用と、縦長画面（スマホ）用の2種類。縦長では全体を細長くして各要素を大きく表示する
+  let W, H, PORTRAIT, TRACK, SEGS, L, SLOT_COUNT, SP, MAX_DIST, BOTTOM_START;
+  let SEATS = [], SEAT_COUNT, CHEF, BTN, buttons, FLOOR_BOTTOM, BGM_BTN, DECO;
+  const FLY_TIME = 0.28;
+  const mod = (a, m) => ((a % m) + m) % m;
+  let layoutReady = false;
+  const wantPortrait = () => window.innerWidth / window.innerHeight < 0.8;
+
+  function buildLayout(portrait) {
+    PORTRAIT = portrait;
+    if (portrait) {
+      W = 540; H = 1000;
+      TRACK = { x1: 75, x2: 465, yTop: 240, yBot: 530, r: 36 };
+    } else {
+      W = 960; H = 1040;
+      TRACK = { x1: 150, x2: 810, yTop: 240, yBot: 530, r: 70 };
+    }
     const { x1, x2, yTop, yBot, r } = TRACK;
     const P = Math.PI;
-    return [
+    // 上の直線は左→右、下の直線は右→左に流れる
+    SEGS = [
       { type: 'line', ax: x1, ay: yTop, bx: x2, by: yTop },
       { type: 'arc', cx: x2, cy: yTop + r, a0: -P / 2 },
       { type: 'line', ax: x2 + r, ay: yTop + r, bx: x2 + r, by: yBot - r },
@@ -36,14 +50,39 @@
       { type: 'line', ax: x1 - r, ay: yBot - r, bx: x1 - r, by: yTop + r },
       { type: 'arc', cx: x1, cy: yTop + r, a0: P },
     ].map(g => ({ ...g, len: g.type === 'line' ? Math.hypot(g.bx - g.ax, g.by - g.ay) : P / 2 * r }));
-  })();
-  const L = SEGS.reduce((a, g) => a + g.len, 0);
-  const SLOT_COUNT = 32;
-  const SP = L / SLOT_COUNT;
-  const FLY_TIME = 0.28;
-  const MAX_DIST = L * 2;    // 2周で廃棄
+    L = SEGS.reduce((acc, g) => acc + g.len, 0);
+    SLOT_COUNT = Math.floor(L / 66);
+    SP = L / SLOT_COUNT;
+    MAX_DIST = L * 2;    // 2周で廃棄
 
-  const mod = (a, m) => ((a % m) + m) % m;
+    // 席：奥（上の直線）に5席、手前（下の直線）に5席
+    BOTTOM_START = SEGS.slice(0, 4).reduce((acc, g) => acc + g.len, 0);
+    const seatX = i => portrait ? 80 + i * 95 : 200 + i * 140;
+    SEATS = [];
+    for (let i = 0; i < 5; i++) SEATS.push({ x: seatX(i), s: seatX(i) - x1, side: 'top', customer: null });
+    for (let i = 0; i < 5; i++) SEATS.push({ x: seatX(i), s: BOTTOM_START + (x2 - seatX(i)), side: 'bottom', customer: null });
+    SEAT_COUNT = SEATS.length;
+
+    // 具材ボタン（5個×2段）
+    BTN = portrait
+      ? { y: 676, h: 150, w: 98, gap: 7, rowGap: 9, plate: 1.25, plateY: 58, nameY: 106, priceY: 133, font: 20, priceFont: 15, key: 10 }
+      : { y: 676, h: 168, w: 172, gap: 14, rowGap: 12, plate: 1.55, plateY: 74, nameY: 126, priceY: 151, font: 24, priceFont: 17, key: 12 };
+    const x0 = (W - (BTN.w * 5 + BTN.gap * 4)) / 2;
+    buttons = SUSHI.map((sushi, i) => ({
+      sushi, w: BTN.w, h: BTN.h, press: 0,
+      x: x0 + (i % 5) * (BTN.w + BTN.gap),
+      y: BTN.y + Math.floor(i / 5) * (BTN.h + BTN.rowGap),
+    }));
+    FLOOR_BOTTOM = BTN.y - 10;
+
+    CHEF = portrait ? { x: 270, y: 330 } : { x: 410, y: 345 };
+    BGM_BTN = portrait ? { x: 328, y: 8, w: 58, h: 30 } : { x: 668, y: 7, w: 64, h: 32 };
+    // 板場の飾り（シャリ桶・ネタケース）
+    DECO = portrait
+      ? { okeX: 150, okeY: 335, oke: 0.6, caseX: 330, caseY: 296, caseW: 128, caseH: 76, netaX: 343, netaDX: 25.5, netaY: 320, netaDY: 32, neta: 0.4 }
+      : { okeX: 230, okeY: 345, oke: 1, caseX: 510, caseY: 300, caseW: 320, caseH: 82, netaX: 542, netaDX: 64, netaY: 330, netaDY: 34, neta: 0.55 };
+  }
+  buildLayout(wantPortrait());
 
   function posAt(s) {
     s = mod(s, L);
@@ -58,34 +97,17 @@
     return { x: TRACK.x1, y: TRACK.yTop };
   }
 
-  // 席：奥（上の直線）に5席、手前（下の直線）に5席
-  const BOTTOM_START = SEGS.slice(0, 4).reduce((a, g) => a + g.len, 0);
-  const SEATS = [];
-  for (let i = 0; i < 5; i++) {
-    const x = 200 + i * 140;
-    SEATS.push({ x, s: x - TRACK.x1, side: 'top', customer: null });
-  }
-  for (let i = 0; i < 5; i++) {
-    const x = 200 + i * 140;
-    SEATS.push({ x, s: BOTTOM_START + (TRACK.x2 - x), side: 'bottom', customer: null });
-  }
-  const SEAT_COUNT = SEATS.length;
-  const CHEF = { x: 410, y: 345 };
-
-  // 具材ボタン（5個×2段）
-  const BTN = { y: 676, h: 168, w: 172, gap: 14, rowGap: 12 };
-  const BTN_X0 = (W - (BTN.w * 5 + BTN.gap * 4)) / 2;
-  const buttons = SUSHI.map((s, i) => ({
-    sushi: s, w: BTN.w, h: BTN.h, press: 0,
-    x: BTN_X0 + (i % 5) * (BTN.w + BTN.gap),
-    y: BTN.y + Math.floor(i / 5) * (BTN.h + BTN.rowGap),
-  }));
-
   // ===== キャンバス =====
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   let ratio = 1;
   function resize() {
+    // 遊んでいない時だけ縦横のレイアウトを切り替える
+    if (layoutReady && state !== 'playing' && wantPortrait() !== PORTRAIT) {
+      buildLayout(wantPortrait());
+      if (state === 'title') setupTitleDeco();
+      else slots = new Array(SLOT_COUNT).fill(null);
+    }
     const scale = Math.min(window.innerWidth / W, window.innerHeight / H);
     const dpr = window.devicePixelRatio || 1;
     canvas.style.width = (W * scale) + 'px';
@@ -250,7 +272,6 @@
     const left = GAME_TIME - elapsed;
     return left < 10 ? 176 : 138 + 26 * difficulty();
   };
-  const BGM_BTN = { x: 668, y: 7, w: 64, h: 32 };
 
   // ===== 状態 =====
   let state = 'title';
@@ -595,7 +616,6 @@
     ctx.closePath();
   }
 
-  const FLOOR_BOTTOM = BTN.y - 10;
   function drawBackground() {
     // 壁
     const g = ctx.createLinearGradient(0, 0, 0, 200);
@@ -634,12 +654,15 @@
     ctx.fillStyle = '#e9d6b4'; ctx.fill();
     ctx.strokeStyle = '#b48a55'; ctx.lineWidth = 3; ctx.stroke();
     // シャリ桶
-    ellipse(230, 345, 70, 32, '#8a5a2b', '#5c3a1e', 3);
-    ellipse(230, 340, 60, 24, '#fbf8ef');
-    for (let i = 0; i < 7; i++) ellipse(190 + i * 13, 338 + (i % 2) * 4, 5, 3, '#efe9d8');
+    const D = DECO;
+    ctx.save(); ctx.translate(D.okeX, D.okeY); ctx.scale(D.oke, D.oke);
+    ellipse(0, 0, 70, 32, '#8a5a2b', '#5c3a1e', 3);
+    ellipse(0, -5, 60, 24, '#fbf8ef');
+    for (let i = 0; i < 7; i++) ellipse(-40 + i * 13, -7 + (i % 2) * 4, 5, 3, '#efe9d8');
+    ctx.restore();
     // ネタケース
-    rrect(510, 300, 320, 82, 10); ctx.fillStyle = '#d6eef5'; ctx.fill(); ctx.strokeStyle = '#8fb3c0'; ctx.lineWidth = 3; ctx.stroke();
-    SUSHI.forEach((s, i) => drawSushi(s.id, 542 + (i % 5) * 64, 330 + Math.floor(i / 5) * 34, 0.55));
+    rrect(D.caseX, D.caseY, D.caseW, D.caseH, 10); ctx.fillStyle = '#d6eef5'; ctx.fill(); ctx.strokeStyle = '#8fb3c0'; ctx.lineWidth = 3; ctx.stroke();
+    SUSHI.forEach((s, i) => drawSushi(s.id, D.netaX + (i % 5) * D.netaDX, D.netaY + Math.floor(i / 5) * D.netaDY, D.neta));
     ctx.restore();
   }
 
@@ -861,32 +884,37 @@
       ctx.fillStyle = b.press > 0 ? '#fff3d6' : '#fdf6e6'; ctx.fill();
       ctx.strokeStyle = b.sushi.plate; ctx.lineWidth = 5; ctx.stroke();
       const cx = b.x + b.w / 2, cy = b.y + press;
-      drawPlate(b.sushi, cx, cy + 74, 1.55);
+      drawPlate(b.sushi, cx, cy + BTN.plateY, BTN.plate);
       ctx.fillStyle = '#3a2414'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      let fs = 24;
-      do { ctx.font = `bold ${fs}px sans-serif`; fs--; } while (ctx.measureText(b.sushi.name).width > b.w - 14 && fs > 10);
-      ctx.fillText(b.sushi.name, cx, cy + 126);
-      ctx.fillStyle = '#a5462b'; ctx.font = 'bold 17px sans-serif';
-      ctx.fillText(b.sushi.price + '円', cx, cy + 151);
-      ellipse(b.x + 20, cy + 20, 12, 12, '#e8d9bd');
+      // 長い名前は縦長レイアウトでは2行に
+      const lines = PORTRAIT && b.sushi.lines ? b.sushi.lines : [b.sushi.name];
+      let fs = lines.length > 1 ? BTN.font - 4 : BTN.font;
+      const widest = Math.max(...lines.map(t => t.length)) === lines[0].length ? lines[0] : lines[1];
+      do { ctx.font = `bold ${fs}px sans-serif`; fs--; } while (ctx.measureText(widest).width > b.w - 10 && fs > 9);
+      lines.forEach((t, k) => ctx.fillText(t, cx, cy + BTN.nameY + (k - (lines.length - 1) / 2) * (fs + 2)));
+      ctx.fillStyle = '#a5462b'; ctx.font = `bold ${BTN.priceFont}px sans-serif`;
+      ctx.fillText(b.sushi.price + '円', cx, cy + BTN.priceY);
+      const kr = BTN.key, kx = b.x + kr + 8;
+      ellipse(kx, cy + kr + 8, kr, kr, '#e8d9bd');
       ctx.fillStyle = '#7a5a40'; ctx.font = 'bold 14px sans-serif';
-      ctx.fillText(b.sushi.key, b.x + 20, cy + 21);
+      ctx.fillText(b.sushi.key, kx, cy + kr + 9);
     }
   }
 
   function drawHUD() {
     ctx.save();
-    ctx.textBaseline = 'middle'; ctx.font = 'bold 22px sans-serif';
+    const fs = PORTRAIT ? 19 : 22, gap = PORTRAIT ? 19 : 26, cr = PORTRAIT ? 8 : 10;
+    ctx.textBaseline = 'middle'; ctx.font = `bold ${fs}px sans-serif`;
     ctx.fillStyle = '#fff'; ctx.textAlign = 'left';
-    ctx.fillText('売上 ' + score + ' 点', 20, 23);
+    ctx.fillText('売上 ' + score + ' 点', PORTRAIT ? 12 : 20, 23);
     ctx.textAlign = 'center';
     const left = Math.max(0, GAME_TIME - elapsed);
     ctx.fillStyle = left < 10 ? '#ffd166' : '#fff';
-    ctx.fillText('のこり ' + Math.ceil(left) + ' 秒', W / 2, 23);
+    ctx.fillText('のこり ' + Math.ceil(left) + ' 秒', PORTRAIT ? 254 : W / 2, 23);
     ctx.textAlign = 'right'; ctx.fillStyle = '#fff';
-    ctx.fillText('怒', W - 20 - ANGRY_LIMIT * 26 - 4, 23);
+    ctx.fillText('怒', W - 20 - ANGRY_LIMIT * gap - 2, 23);
     for (let i = 0; i < ANGRY_LIMIT; i++) {
-      ellipse(W - 30 - i * 26, 23, 10, 10, i < angryCount ? '#e74c3c' : 'rgba(255,255,255,0.25)');
+      ellipse(W - 20 - cr - i * gap, 23, cr, cr, i < angryCount ? '#e74c3c' : 'rgba(255,255,255,0.25)');
     }
     // BGM ON/OFF ボタン
     const bb = BGM_BTN;
@@ -954,6 +982,7 @@
     }
   });
   window.addEventListener('keydown', e => {
+    if (e.target && e.target.tagName === 'INPUT') return;
     const b = buttons.find(b => b.sushi.key === e.key);
     if (b) pressButton(b);
     if ((e.key === 'Enter' || e.key === ' ') && state !== 'playing') start();
@@ -985,16 +1014,51 @@
     document.getElementById('resultScore').textContent = score;
     document.getElementById('resultDetail').textContent =
       `提供 ${served} 皿 ／ 最大コンボ ${maxCombo} ／ 怒った客 ${angryCount} 人 ／ 廃棄 ${wasted} 皿`;
-    const rank = score >= 15000 ? '称号：伝説の大将' : score >= 10000 ? '称号：大将' : score >= 6000 ? '称号：板前' : score >= 2500 ? '称号：一人前' : '称号：見習い';
-    document.getElementById('resultRank').textContent = rank;
+    document.getElementById('resultRank').textContent = '称号：' + Ranking.title(score);
+    // ランキング
+    const place = Ranking.placeOf(score);
+    if (place) {
+      entryPlace.textContent = place;
+      nameInput.value = Ranking.lastName();
+      entryEl.classList.remove('hidden');
+      rankBox.textContent = '';
+    } else {
+      entryEl.classList.add('hidden');
+      Ranking.render(rankBox);
+    }
     resultEl.classList.remove('hidden');
+    if (place) setTimeout(() => nameInput.focus(), 300);
   }
+  const Ranking = window.SushiRanking;
+  const entryEl = document.getElementById('entry');
+  const entryPlace = document.getElementById('entryPlace');
+  const nameInput = document.getElementById('nameInput');
+  const rankBox = document.getElementById('rankBox');
+  entryEl.addEventListener('submit', e => {
+    e.preventDefault();
+    if (entryEl.classList.contains('hidden')) return;
+    const rec = Ranking.add({ name: nameInput.value, score, served, combo: maxCombo });
+    nameInput.blur();
+    entryEl.classList.add('hidden');
+    Ranking.render(rankBox, { highlight: rec.id });
+    updateBest();
+  });
+  function updateBest() {
+    const b = Ranking.best();
+    document.getElementById('bestScore').textContent = b ? `自己ベスト ${b.toLocaleString()} 点` : '';
+  }
+  updateBest();
   document.getElementById('startBtn').addEventListener('click', start);
   document.getElementById('retryBtn').addEventListener('click', start);
 
   // タイトル画面用の飾り
   slots = new Array(SLOT_COUNT).fill(null);
   offset = 0;
-  SUSHI.forEach((s, n) => { slots[n * 3] = { sushi: s, fly: 1, dist: 0 }; });
+  function setupTitleDeco() {
+    slots = new Array(SLOT_COUNT).fill(null);
+    SUSHI.forEach((s, n) => { slots[Math.floor(n * SLOT_COUNT / SUSHI.length)] = { sushi: s, fly: 1, dist: 0 }; });
+  }
+  setupTitleDeco();
+  layoutReady = true;
   requestAnimationFrame(frame);
 })();

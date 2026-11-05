@@ -15,8 +15,9 @@
       <h1>回転寿司<br><span>へいお待ち！</span></h1>
       <p class="lead">お客さんの頭の上の寿司を見て、<br>下のボタンで「へいお待ち！」</p>
       <p class="keys">キーボード：1〜5 上段 ／ 6〜9・0 下段 ／ M BGM切替</p>
+      <p class="best" id="bestScore"></p>
       <button id="startBtn" class="btn">開店する</button>
-      <p class="links"><a href="howto.html">遊び方</a> ／ <a href="index.html">トップへ</a></p>
+      <p class="links"><a href="ranking.html">ランキング</a> ／ <a href="howto.html">遊び方</a> ／ <a href="index.html">トップへ</a></p>
     </div>
   </div>
 
@@ -26,11 +27,20 @@
       <p class="score">売上 <span id="resultScore">0</span> 点</p>
       <p id="resultDetail"></p>
       <p class="rank" id="resultRank"></p>
+      <form id="entry" class="entry hidden">
+        <p class="newrec">ランクイン！ <span id="entryPlace"></span>位</p>
+        <div class="entry-row">
+          <input id="nameInput" maxlength="10" placeholder="なまえ（10文字まで）" autocomplete="nickname" enterkeyhint="done">
+          <button type="submit" class="btn small">登録</button>
+        </div>
+      </form>
+      <div id="rankBox" class="rank-box"></div>
       <button id="retryBtn" class="btn">もう一度</button>
-      <p class="links"><a href="howto.html">遊び方</a> ／ <a href="index.html">トップへ</a></p>
+      <p class="links"><a href="ranking.html">ランキング</a> ／ <a href="howto.html">遊び方</a> ／ <a href="index.html">トップへ</a></p>
     </div>
   </div>
 </div>
+<script src="ranking.js"></script>
 <script src="game.js"></script>
 </body>
 </html>

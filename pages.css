@@ -148,3 +148,21 @@ kbd {
   .nav a { font-size: 13px; padding: 4px 8px; }
   .panel { padding: 18px; }
 }
+
+/* ランキング */
+.rank-page { overflow-x: auto; }
+table.ranking { width: 100%; border-collapse: collapse; background: #fff; border-radius: 14px; overflow: hidden; font-size: 16px; }
+.ranking th { background: var(--brown); color: #fff; padding: 10px 12px; font-size: 14px; white-space: nowrap; }
+.ranking td { padding: 10px 12px; border-bottom: 1px solid #eadfcb; text-align: center; white-space: nowrap; }
+.ranking td:nth-child(2) { text-align: left; font-weight: 700; white-space: normal; }
+.ranking td:nth-child(3) { font-weight: 900; color: var(--red); }
+.ranking td.place { font-size: 20px; width: 3.5em; }
+.ranking tbody tr:nth-child(-n+3) td { background: #fff8e6; }
+.rank-empty { text-align: center; font-size: 18px; padding: 24px 0; margin: 0; }
+.rank-note { font-size: 13px; color: #7a5a40; margin: 14px 0 0; }
+button.btn { border: none; font-family: inherit; cursor: pointer; }
+@media (max-width: 760px) {
+  .ranking.full th:nth-child(4), .ranking.full td:nth-child(4),
+  .ranking.full th:nth-child(7), .ranking.full td:nth-child(7) { display: none; }
+  .ranking td, .ranking th { padding: 8px 6px; font-size: 14px; }
+}
