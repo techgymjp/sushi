@@ -2,40 +2,98 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>回転寿司へいお待ち</title>
-<link rel="stylesheet" href="style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>回転寿司へいお待ち！</title>
+<meta name="description" content="お客さんが食べたい寿司をすばやくレーンに流す、回転寿司のブラウザゲーム。">
+<meta property="og:title" content="回転寿司へいお待ち！">
+<meta property="og:description" content="お客さんが食べたい寿司をすばやくレーンに流す、回転寿司のブラウザゲーム。">
+<meta property="og:image" content="assets/screenshot.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pages.css">
 </head>
 <body>
-<div id="wrap">
-  <canvas id="game"></canvas>
-
-  <div id="title" class="overlay">
-    <div class="panel">
-      <h1>回転寿司<br><span>へいお待ち！</span></h1>
-      <ul class="howto">
-        <li>お客さんの頭の上に<b>食べたい寿司</b>が出ます。</li>
-        <li>下の<b>具材ボタン</b>を押すと、その寿司を食べたいお客さんの前のレーンに皿が置かれます。</li>
-        <li>目の前に皿があるときは、その<b>後ろの空いている所</b>に置かれます。</li>
-        <li>お客さんが取れるのは<b>目の前に流れてきた皿だけ</b>。食べたい寿司なら取ってくれます。</li>
-        <li>間違えた皿はそのまま回り続け、2周すると廃棄（−20点）。</li>
-        <li>待たせすぎると怒って帰ります。5人怒らせたら閉店！</li>
-      </ul>
-      <p class="keys">キーボード：1 マグロ / 2 ハマチ / 3 サーモン / 4 いくら / 5 うに ／ M BGM切替</p>
-      <button id="startBtn" class="btn">開店する</button>
-    </div>
+<header class="site-header">
+  <div class="inner">
+    <a class="logo" href="index.html">回転寿司<span>へいお待ち！</span></a>
+    <nav class="nav">
+      <a href="index.html" aria-current="page">トップ</a>
+      <a href="howto.html">遊び方</a>
+      <a href="game.html" class="play">あそぶ</a>
+    </nav>
   </div>
+</header>
 
-  <div id="result" class="overlay hidden">
-    <div class="panel">
-      <h2 id="resultTitle">閉店！</h2>
-      <p class="score">売上 <span id="resultScore">0</span> 点</p>
-      <p id="resultDetail"></p>
-      <p class="rank" id="resultRank"></p>
-      <button id="retryBtn" class="btn">もう一度</button>
+<main>
+  <section class="hero">
+    <div>
+      <h1>いらっしゃいませ！<span class="big">へいお待ち！</span></h1>
+      <p class="catch">
+        お客さんの頭の上に浮かぶ「食べたい寿司」を見て、ボタンひとつでレーンへ。<br>
+        でも、お客さんが取れるのは<b>目の前に流れてきた皿だけ</b>。<br>
+        混み合うレーンをさばいて、90秒で売上ナンバーワンの大将をめざそう！
+      </p>
+      <div class="btn-row">
+        <a class="btn" href="game.html">あそぶ</a>
+        <a class="btn sub" href="howto.html">遊び方を見る</a>
+      </div>
     </div>
-  </div>
-</div>
-<script src="game.js"></script>
+    <div class="shot">
+      <img src="assets/screenshot.png" width="960" height="1040" alt="ゲーム画面。回転レーンを囲んで奥と手前にお客さんが座り、下に寿司ボタンが並んでいる">
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec">ここがおもしろい</h2>
+    <div class="features">
+      <div class="card">
+        <div class="icon">🍣</div>
+        <h3>タップするだけ</h3>
+        <p>ネタのボタンを押すだけで、食べたいお客さんの前に皿が届きます。スマホでもパソコンでも遊べます。</p>
+      </div>
+      <div class="card">
+        <div class="icon">🔄</div>
+        <h3>本物の回転寿司のしくみ</h3>
+        <p>前に皿があれば後ろの空きへ。間違えた皿はぐるぐる回り続けます。レーンの混み具合を読むのがカギ。</p>
+      </div>
+      <div class="card">
+        <div class="icon">👨‍👩‍👧‍👦</div>
+        <h3>最大10人の大にぎわい</h3>
+        <p>奥と手前のカウンターにお客さんがどんどんやって来ます。待たせすぎると怒って帰っちゃうかも！</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="menu-sec">
+    <h2 class="sec">本日のお品書き</h2>
+    <div class="menu">
+      <img src="assets/menu-maguro.png" alt="マグロ 150円">
+      <img src="assets/menu-hamachi.png" alt="ハマチ 150円">
+      <img src="assets/menu-salmon.png" alt="サーモン 120円">
+      <img src="assets/menu-ikura.png" alt="いくら 250円">
+      <img src="assets/menu-uni.png" alt="うに 300円">
+      <img src="assets/menu-kazunoko.png" alt="数の子 200円">
+      <img src="assets/menu-iwashi.png" alt="イワシ 120円">
+      <img src="assets/menu-miso.png" alt="味噌汁 180円">
+      <img src="assets/menu-california.png" alt="カリフォルニアロール 200円">
+      <img src="assets/menu-anago.png" alt="穴子 200円">
+    </div>
+    <p class="menu-note">左上の数字はキーボードのショートカットです。</p>
+  </section>
+
+  <section class="cta">
+    <h2 class="sec">さあ、開店！</h2>
+    <p>コミカルなBGMにのって、どんどん寿司を流そう。</p>
+    <div class="btn-row">
+      <a class="btn" href="game.html">あそぶ</a>
+      <a class="btn sub" href="howto.html">遊び方</a>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  回転寿司へいお待ち！ ／ <a href="howto.html">遊び方</a> ／ <a href="game.html">あそぶ</a>
+</footer>
 </body>
 </html>

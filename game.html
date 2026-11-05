@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>あそぶ｜回転寿司へいお待ち！</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game"></canvas>
+
+  <div id="title" class="overlay">
+    <div class="panel">
+      <h1>回転寿司<br><span>へいお待ち！</span></h1>
+      <p class="lead">お客さんの頭の上の寿司を見て、<br>下のボタンで「へいお待ち！」</p>
+      <p class="keys">キーボード：1〜5 上段 ／ 6〜9・0 下段 ／ M BGM切替</p>
+      <button id="startBtn" class="btn">開店する</button>
+      <p class="links"><a href="howto.html">遊び方</a> ／ <a href="index.html">トップへ</a></p>
+    </div>
+  </div>
+
+  <div id="result" class="overlay hidden">
+    <div class="panel">
+      <h2 id="resultTitle">閉店！</h2>
+      <p class="score">売上 <span id="resultScore">0</span> 点</p>
+      <p id="resultDetail"></p>
+      <p class="rank" id="resultRank"></p>
+      <button id="retryBtn" class="btn">もう一度</button>
+      <p class="links"><a href="howto.html">遊び方</a> ／ <a href="index.html">トップへ</a></p>
+    </div>
+  </div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>

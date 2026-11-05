@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>遊び方｜回転寿司へいお待ち！</title>
+<meta name="description" content="回転寿司へいお待ち！の遊び方・ルール・操作方法。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pages.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="logo" href="index.html">回転寿司<span>へいお待ち！</span></a>
+    <nav class="nav">
+      <a href="index.html">トップ</a>
+      <a href="howto.html" aria-current="page">遊び方</a>
+      <a href="game.html" class="play">あそぶ</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="page-title">
+    <h1>遊び方</h1>
+    <p>90秒の営業時間で、できるだけたくさん売り上げよう！</p>
+    <ul class="toc">
+      <li><a href="#steps">基本の流れ</a></li>
+      <li><a href="#rules">ルール</a></li>
+      <li><a href="#score">得点</a></li>
+      <li><a href="#controls">操作方法</a></li>
+      <li><a href="#tips">コツ</a></li>
+    </ul>
+  </div>
+
+  <section id="steps">
+    <h2 class="sec">基本の流れ</h2>
+    <div class="panel">
+      <ol class="steps">
+        <li class="step">
+          <div>
+            <h3><span class="num">1</span>注文を見る</h3>
+            <p>お客さんの頭の上の吹き出しに<mark>食べたい寿司</mark>が出ます。吹き出しの下のバーは待ってくれる時間。緑→黄→赤と減っていきます。</p>
+            <p>手前のカウンターのお客さんは後ろ姿なので、注文はレーンの内側に出ます。</p>
+          </div>
+          <img src="assets/howto-top.png" width="1520" height="460" alt="お客さんの頭の上に食べたい寿司の吹き出しが出ている">
+        </li>
+        <li class="step">
+          <div>
+            <h3><span class="num">2</span>ネタのボタンを押す</h3>
+            <p>画面下の<mark>ネタのボタン</mark>を押すと、板前さんが「へいお待ち！」。その寿司を食べたいお客さんの前のレーンに、自動で皿が置かれます。</p>
+            <p>同じ寿司を待っている人が何人かいたら、一番待たせているお客さんが優先です。</p>
+          </div>
+          <img src="assets/howto-buttons.png" width="960" height="380" alt="10種類のネタのボタンが2段に並んでいる">
+        </li>
+        <li class="step">
+          <div>
+            <h3><span class="num">3</span>レーンで届ける</h3>
+            <p>お客さんが取れるのは<mark>目の前に流れてきた皿だけ</mark>。食べたい寿司なら、そのまま取って食べてくれます。</p>
+            <p>目の前にもう皿があるときは、その<mark>後ろの空いているところ</mark>に置かれます。レーンが混んでいると届くまで時間がかかります。</p>
+          </div>
+          <img src="assets/howto-lane.png" width="1760" height="940" alt="回転レーンに色とりどりの皿が流れている">
+        </li>
+        <li class="step">
+          <div>
+            <h3><span class="num">4</span>間違えた皿は流れていく</h3>
+            <p>誰も注文していない寿司を出すと、皿はそのまま回転寿司として流れ続けます。あとから来たお客さんがその寿司を頼めば、取ってもらえることも。</p>
+            <p>ただし、<mark>2周しても取られない皿は廃棄</mark>（−20点）です。</p>
+          </div>
+          <img src="assets/menu-california.png" width="344" height="348" alt="カリフォルニアロールのボタン" style="max-width:220px;justify-self:center">
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="rules">
+    <h2 class="sec">ルール</h2>
+    <table class="rules">
+      <tr><th>営業時間</th><td>90秒。時間がたつほどレーンが速くなり、お客さんも増えていきます。</td></tr>
+      <tr><th>お客さん</th><td>奥のカウンター5席・手前のカウンター5席、最大10人。食べ終わると、また注文するか帰ります。</td></tr>
+      <tr><th>怒って帰る</th><td>待ち時間のバーがなくなると「もう帰る！」。画面右上の「怒」マークが増えます。</td></tr>
+      <tr><th>閉店</th><td>5人怒らせると、その時点で閉店（ゲームオーバー）です。</td></tr>
+      <tr><th>レーンがいっぱい</th><td>空いているところがないと皿を置けません。間違えた皿をためないようにしよう。</td></tr>
+    </table>
+  </section>
+
+  <section id="score">
+    <h2 class="sec">得点</h2>
+    <table class="rules">
+      <tr><th>寿司の値段</th><td>お客さんが取った寿司の値段がそのまま売上になります（120〜300点）。</td></tr>
+      <tr><th>早出しボーナス</th><td>待ち時間が多く残っているほど最大+100点。</td></tr>
+      <tr><th>コンボ</th><td>続けて提供すると、2コンボ目から +20点ずつアップ。間違えたり、お客さんを怒らせるとリセット。</td></tr>
+      <tr><th>廃棄</th><td>2周して誰にも取られなかった皿は −20点。</td></tr>
+      <tr><th>称号</th><td>見習い → 一人前（2,500点〜）→ 板前（6,000点〜）→ 大将（10,000点〜）→ 伝説の大将（15,000点〜）</td></tr>
+    </table>
+  </section>
+
+  <section id="controls">
+    <h2 class="sec">操作方法</h2>
+    <div class="panel">
+      <p><b>スマホ・タブレット：</b>ネタのボタンをタップ。<br><b>パソコン：</b>クリック、またはキーボードで操作できます。</p>
+      <div class="keys">
+        <span class="key"><kbd>1</kbd>マグロ</span>
+        <span class="key"><kbd>2</kbd>ハマチ</span>
+        <span class="key"><kbd>3</kbd>サーモン</span>
+        <span class="key"><kbd>4</kbd>いくら</span>
+        <span class="key"><kbd>5</kbd>うに</span>
+        <span class="key"><kbd>6</kbd>数の子</span>
+        <span class="key"><kbd>7</kbd>イワシ</span>
+        <span class="key"><kbd>8</kbd>味噌汁</span>
+        <span class="key"><kbd>9</kbd>カリフォルニアロール</span>
+        <span class="key"><kbd>0</kbd>穴子</span>
+        <span class="key"><kbd>M</kbd>BGM ON/OFF</span>
+        <span class="key"><kbd>Enter</kbd>開店／もう一度</span>
+      </div>
+      <p>BGMは画面右上の「♪」ボタンでも切り替えられます。</p>
+    </div>
+  </section>
+
+  <section id="tips">
+    <h2 class="sec">上達のコツ</h2>
+    <div class="tips">
+      <div class="card"><h3>赤いバーから先に</h3><p>同じ寿司を待つ人が複数いても、自動で一番待っている人に届きます。迷ったら赤いバーのお客さんの注文から出そう。</p></div>
+      <div class="card"><h3>レーンの流れを読む</h3><p>上の列は左→右、下の列は右→左に流れます。前に皿が詰まっていると届くのが遅れます。</p></div>
+      <div class="card"><h3>間違いは連打しない</h3><p>間違えた皿はレーンをふさぎ、コンボも途切れます。押す前にもう一度吹き出しをチェック。</p></div>
+      <div class="card"><h3>高いネタはチャンス</h3><p>うに（300点）やいくら（250点）の注文はすぐに出して、コンボを伸ばそう。</p></div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2 class="sec">準備はいいかい？</h2>
+    <div class="btn-row">
+      <a class="btn" href="game.html">あそぶ</a>
+      <a class="btn sub" href="index.html">トップへ</a>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  回転寿司へいお待ち！ ／ <a href="index.html">トップ</a> ／ <a href="game.html">あそぶ</a>
+</footer>
+</body>
+</html>

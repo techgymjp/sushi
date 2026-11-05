@@ -1,0 +1,150 @@
+:root {
+  --red: #c0392b;
+  --brown: #a5462b;
+  --dark: #3a2414;
+  --cream: #fdf6e6;
+  --wood: #c99a62;
+  --wall: #f3e3c3;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  color: var(--dark);
+  background: var(--wall);
+  line-height: 1.75;
+}
+img { max-width: 100%; height: auto; display: block; }
+a { color: var(--brown); }
+
+/* ヘッダー（のれん） */
+.site-header {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--brown);
+  box-shadow: 0 3px 0 #8c3a23;
+}
+.site-header .inner {
+  max-width: 1040px; margin: 0 auto; padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.logo { color: #fff; text-decoration: none; font-weight: 900; font-size: 20px; white-space: nowrap; }
+.logo span { color: #ffd166; }
+.nav { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.nav a {
+  color: #fff; text-decoration: none; font-weight: 700; font-size: 15px;
+  padding: 4px 12px; border-radius: 999px;
+}
+.nav a[aria-current="page"] { background: rgba(255,255,255,0.2); }
+.nav a.play { background: #fff; color: var(--red); }
+
+main { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+section { padding: 48px 0; }
+h2.sec {
+  font-size: 28px; text-align: center; margin: 0 0 28px;
+}
+h2.sec::after {
+  content: ""; display: block; width: 64px; height: 5px; margin: 8px auto 0;
+  background: var(--red); border-radius: 3px;
+}
+
+/* ボタン */
+.btn {
+  display: inline-block; text-decoration: none; text-align: center;
+  font-weight: 900; font-size: 22px; color: #fff; background: var(--red);
+  border-radius: 14px; padding: 14px 44px;
+  box-shadow: 0 6px 0 #7d2219;
+  transition: transform .08s, box-shadow .08s;
+}
+.btn:hover { filter: brightness(1.06); }
+.btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #7d2219; }
+.btn.sub { background: #fff; color: var(--brown); box-shadow: 0 6px 0 #d8c4a4; }
+.btn-row { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+
+/* ヒーロー */
+.hero {
+  display: grid; grid-template-columns: 1.05fr 1fr; gap: 36px; align-items: center;
+  padding: 48px 0 40px;
+}
+.hero h1 { margin: 0; line-height: 1.15; font-size: 30px; color: var(--brown); }
+.hero h1 .big { display: block; font-size: 64px; color: var(--red); letter-spacing: 2px; text-shadow: 3px 3px 0 #fff; }
+.hero .catch { font-size: 18px; margin: 18px 0 26px; }
+.hero .shot {
+  border: 8px solid #fff; border-radius: 18px; overflow: hidden;
+  box-shadow: 0 14px 30px rgba(60,30,10,0.25);
+  transform: rotate(1.5deg);
+  background: #fff;
+}
+.hero .btn-row { justify-content: flex-start; }
+
+/* 特徴 */
+.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.card {
+  background: var(--cream); border-radius: 18px; padding: 22px;
+  border: 4px solid #ead7b5;
+}
+.card .icon { font-size: 40px; line-height: 1; }
+.card h3 { margin: 10px 0 6px; font-size: 20px; color: var(--brown); }
+.card p { margin: 0; font-size: 15px; }
+
+/* お品書き */
+.menu-sec { background: #5a3418; color: #fff; margin: 0 -16px; padding: 48px 16px; border-radius: 0; }
+.menu-sec h2.sec::after { background: #ffd166; }
+.menu { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; max-width: 1040px; margin: 0 auto; }
+.menu img { width: 100%; border-radius: 16px; }
+.menu-note { text-align: center; font-size: 14px; opacity: .85; margin: 18px 0 0; }
+
+.cta { text-align: center; }
+.cta p { font-size: 18px; }
+
+/* 遊び方ページ */
+.page-title { text-align: center; padding: 40px 0 0; }
+.page-title h1 { font-size: 40px; color: var(--red); margin: 0; }
+.page-title p { margin: 6px 0 0; }
+.toc { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 22px 0 0; padding: 0; list-style: none; }
+.toc a { display: block; background: var(--cream); border-radius: 999px; padding: 4px 16px; text-decoration: none; font-weight: 700; border: 2px solid #ead7b5; }
+
+.panel {
+  background: var(--cream); border-radius: 20px; padding: 28px;
+  border: 4px solid #ead7b5;
+}
+.steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 28px; }
+.step { display: grid; grid-template-columns: 1fr 1.15fr; gap: 24px; align-items: center; }
+.step .num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--red); color: #fff; font-weight: 900; font-size: 20px; margin-right: 8px;
+}
+.step h3 { font-size: 22px; margin: 0 0 8px; display: flex; align-items: center; }
+.step p { margin: 0; }
+.step img { border-radius: 14px; border: 4px solid #fff; box-shadow: 0 6px 16px rgba(60,30,10,0.18); }
+mark { background: linear-gradient(transparent 55%, #ffd16699 55%); color: inherit; font-weight: 700; }
+
+table.rules { width: 100%; border-collapse: collapse; background: #fff; border-radius: 14px; overflow: hidden; }
+.rules th, .rules td { padding: 12px 14px; border-bottom: 1px solid #eadfcb; text-align: left; vertical-align: top; }
+.rules th { width: 34%; background: #fbeed6; color: var(--brown); }
+.rules tr:last-child th, .rules tr:last-child td { border-bottom: none; }
+
+.keys { display: flex; flex-wrap: wrap; gap: 10px; }
+.key { display: flex; align-items: center; gap: 8px; background: #fff; border-radius: 12px; padding: 6px 12px; border: 2px solid #ead7b5; }
+kbd {
+  display: inline-block; min-width: 30px; text-align: center; font-family: inherit; font-weight: 900;
+  background: var(--dark); color: #fff; border-radius: 6px; padding: 1px 8px; box-shadow: 0 3px 0 #000;
+}
+.tips { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.tips .card h3::before { content: "💡 "; }
+
+.site-footer { text-align: center; padding: 30px 16px; background: var(--brown); color: #fff; font-size: 14px; margin-top: 30px; }
+.site-footer a { color: #ffd166; }
+
+@media (max-width: 760px) {
+  .hero { grid-template-columns: 1fr; padding-top: 28px; text-align: center; }
+  .hero .btn-row { justify-content: center; }
+  .hero h1 .big { font-size: 48px; }
+  .features, .tips { grid-template-columns: 1fr; }
+  .menu { grid-template-columns: repeat(2, 1fr); }
+  .step { grid-template-columns: 1fr; }
+  .logo { font-size: 16px; }
+  .nav a { font-size: 13px; padding: 4px 8px; }
+  .panel { padding: 18px; }
+}

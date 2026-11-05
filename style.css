@@ -48,3 +48,6 @@ h2 { margin: 0 0 8px; font-size: 34px; color: #a5462b; }
   box-shadow: 0 5px 0 #7d2219;
 }
 .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #7d2219; }
+.lead { font-size: 18px; line-height: 1.6; margin: 4px 0 8px; }
+.links { margin: 16px 0 0; font-size: 15px; }
+.links a { color: #a5462b; font-weight: bold; }

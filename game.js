@@ -3,26 +3,42 @@
   'use strict';
 
   // ===== 基本設定 =====
-  const W = 960, H = 760;
+  const W = 960, H = 1040;
   const GAME_TIME = 90;      // 秒
   const ANGRY_LIMIT = 5;     // 怒って帰った人数の上限
-  const SEAT_COUNT = 5;
 
   const SUSHI = [
-    { id: 'maguro',  name: 'マグロ',   price: 150, plate: '#c0392b', key: '1' },
-    { id: 'hamachi', name: 'ハマチ',   price: 150, plate: '#2e86c1', key: '2' },
-    { id: 'salmon',  name: 'サーモン', price: 120, plate: '#27ae60', key: '3' },
-    { id: 'ikura',   name: 'いくら',   price: 250, plate: '#d4ac0d', key: '4' },
-    { id: 'uni',     name: 'うに',     price: 300, plate: '#1c1c1c', key: '5' },
+    { id: 'maguro',     name: 'マグロ',     price: 150, plate: '#c0392b', key: '1' },
+    { id: 'hamachi',    name: 'ハマチ',     price: 150, plate: '#2e86c1', key: '2' },
+    { id: 'salmon',     name: 'サーモン',   price: 120, plate: '#27ae60', key: '3' },
+    { id: 'ikura',      name: 'いくら',     price: 250, plate: '#d4ac0d', key: '4' },
+    { id: 'uni',        name: 'うに',       price: 300, plate: '#1c1c1c', key: '5' },
+    { id: 'kazunoko',   name: '数の子',     price: 200, plate: '#e67e22', key: '6' },
+    { id: 'iwashi',     name: 'イワシ',     price: 120, plate: '#95a5a6', key: '7' },
+    { id: 'miso',       name: '味噌汁',     price: 180, plate: '#8e44ad', key: '8' },
+    { id: 'california', name: 'カリフォルニアロール', price: 200, plate: '#e84393', key: '9' },
+    { id: 'anago',      name: '穴子',       price: 200, plate: '#6d4c41', key: '0' },
   ];
 
-  // ===== レーン（ループ）形状 =====
-  const TRACK = { x1: 130, x2: 830, yTop: 240, yBot: 420, r: 90 };
-  const CY = (TRACK.yTop + TRACK.yBot) / 2;
-  const STRAIGHT = TRACK.x2 - TRACK.x1;
-  const ARC = Math.PI * TRACK.r;
-  const L = STRAIGHT * 2 + ARC * 2;
-  const SLOT_COUNT = 30;
+  // ===== レーン（角丸の長方形ループ） =====
+  // 上の直線は左→右、下の直線は右→左に流れる
+  const TRACK = { x1: 150, x2: 810, yTop: 240, yBot: 530, r: 70 };
+  const SEGS = (() => {
+    const { x1, x2, yTop, yBot, r } = TRACK;
+    const P = Math.PI;
+    return [
+      { type: 'line', ax: x1, ay: yTop, bx: x2, by: yTop },
+      { type: 'arc', cx: x2, cy: yTop + r, a0: -P / 2 },
+      { type: 'line', ax: x2 + r, ay: yTop + r, bx: x2 + r, by: yBot - r },
+      { type: 'arc', cx: x2, cy: yBot - r, a0: 0 },
+      { type: 'line', ax: x2, ay: yBot, bx: x1, by: yBot },
+      { type: 'arc', cx: x1, cy: yBot - r, a0: P / 2 },
+      { type: 'line', ax: x1 - r, ay: yBot - r, bx: x1 - r, by: yTop + r },
+      { type: 'arc', cx: x1, cy: yTop + r, a0: P },
+    ].map(g => ({ ...g, len: g.type === 'line' ? Math.hypot(g.bx - g.ax, g.by - g.ay) : P / 2 * r }));
+  })();
+  const L = SEGS.reduce((a, g) => a + g.len, 0);
+  const SLOT_COUNT = 32;
   const SP = L / SLOT_COUNT;
   const FLY_TIME = 0.28;
   const MAX_DIST = L * 2;    // 2周で廃棄
@@ -31,29 +47,39 @@
 
   function posAt(s) {
     s = mod(s, L);
-    const { x1, x2, yTop, yBot, r } = TRACK;
-    if (s < STRAIGHT) return { x: x1 + s, y: yTop };
-    s -= STRAIGHT;
-    if (s < ARC) { const a = -Math.PI / 2 + s / r; return { x: x2 + r * Math.cos(a), y: CY + r * Math.sin(a) }; }
-    s -= ARC;
-    if (s < STRAIGHT) return { x: x2 - s, y: yBot };
-    s -= STRAIGHT;
-    const a = Math.PI / 2 + s / r;
-    return { x: x1 + r * Math.cos(a), y: CY + r * Math.sin(a) };
+    for (const g of SEGS) {
+      if (s < g.len) {
+        if (g.type === 'line') { const t = s / g.len; return { x: g.ax + (g.bx - g.ax) * t, y: g.ay + (g.by - g.ay) * t }; }
+        const a = g.a0 + s / TRACK.r;
+        return { x: g.cx + TRACK.r * Math.cos(a), y: g.cy + TRACK.r * Math.sin(a) };
+      }
+      s -= g.len;
+    }
+    return { x: TRACK.x1, y: TRACK.yTop };
   }
 
-  // 席（レーン上部の直線に沿って並ぶ）
+  // 席：奥（上の直線）に5席、手前（下の直線）に5席
+  const BOTTOM_START = SEGS.slice(0, 4).reduce((a, g) => a + g.len, 0);
   const SEATS = [];
-  for (let i = 0; i < SEAT_COUNT; i++) {
+  for (let i = 0; i < 5; i++) {
     const x = 200 + i * 140;
-    SEATS.push({ x, s: x - TRACK.x1, customer: null });
+    SEATS.push({ x, s: x - TRACK.x1, side: 'top', customer: null });
   }
-  const CHEF = { x: 480, y: 335 };
+  for (let i = 0; i < 5; i++) {
+    const x = 200 + i * 140;
+    SEATS.push({ x, s: BOTTOM_START + (TRACK.x2 - x), side: 'bottom', customer: null });
+  }
+  const SEAT_COUNT = SEATS.length;
+  const CHEF = { x: 410, y: 345 };
 
-  // 具材ボタン
-  const BTN = { y: 490, h: 240, w: 172, gap: 14 };
+  // 具材ボタン（5個×2段）
+  const BTN = { y: 676, h: 168, w: 172, gap: 14, rowGap: 12 };
   const BTN_X0 = (W - (BTN.w * 5 + BTN.gap * 4)) / 2;
-  const buttons = SUSHI.map((s, i) => ({ sushi: s, x: BTN_X0 + i * (BTN.w + BTN.gap), y: BTN.y, w: BTN.w, h: BTN.h, press: 0 }));
+  const buttons = SUSHI.map((s, i) => ({
+    sushi: s, w: BTN.w, h: BTN.h, press: 0,
+    x: BTN_X0 + (i % 5) * (BTN.w + BTN.gap),
+    y: BTN.y + Math.floor(i / 5) * (BTN.h + BTN.rowGap),
+  }));
 
   // ===== キャンバス =====
   const canvas = document.getElementById('game');
@@ -237,7 +263,7 @@
     spawnTimer = 0.6; popups = []; chefShout = 0; wrongFlash = 0;
     SEATS.forEach(s => s.customer = null);
     buttons.forEach(b => b.press = 0);
-    spawnCustomer(); spawnCustomer();
+    spawnCustomer(); spawnCustomer(); spawnCustomer();
   }
 
   const difficulty = () => Math.min(1, elapsed / GAME_TIME);
@@ -249,10 +275,11 @@
   const HAIRS = ['#2b1b10', '#4a3020', '#111', '#7a5230', '#9a9a9a', '#b5651d'];
   const SHIRTS = ['#3867d6', '#20bf6b', '#eb3b5a', '#8854d0', '#fa8231', '#4b6584', '#0fb9b1'];
   const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const popY = seat => seat.side === 'top' ? 110 : 575;
 
   function newOrder(c) {
     c.order = pick(SUSHI);
-    c.patienceMax = 22 - 9 * difficulty() + Math.random() * 3;
+    c.patienceMax = 24 - 9 * difficulty() + Math.random() * 3;
     c.patience = c.patienceMax;
     c.state = 'waiting';
   }
@@ -374,7 +401,7 @@
           c.state = 'leaving'; c.mood = 'angry'; c.anim = 0;
           angryCount++; combo = 0;
           sfx.angry();
-          addPopup(seat.x, 110, 'もう帰る！', '#c0392b', 26);
+          addPopup(seat.x, popY(seat), 'もう帰る！', '#c0392b', 26);
         }
       } else if (c.state === 'eating') {
         if (c.anim > 1.1) {
@@ -383,7 +410,7 @@
             newOrder(c); c.anim = 0;
           } else {
             c.state = 'leaving'; c.mood = 'happy'; c.anim = 0;
-            addPopup(seat.x, 110, 'ごちそうさま！', '#a5462b', 22);
+            addPopup(seat.x, popY(seat), 'ごちそうさま！', '#a5462b', 22);
           }
         }
       } else if (c.state === 'leaving') {
@@ -395,7 +422,7 @@
     spawnTimer -= dt;
     if (spawnTimer <= 0) {
       spawnCustomer();
-      spawnTimer = (3.4 - 1.8 * d) * (0.7 + Math.random() * 0.6);
+      spawnTimer = (2.8 - 1.4 * d) * (0.7 + Math.random() * 0.6);
     }
 
     // ポップアップ
@@ -414,8 +441,8 @@
     score += gain; served++;
     c.state = 'eating'; c.anim = 0; c.eating = p.sushi; c.mood = 'happy';
     sfx.serve();
-    addPopup(c.seat.x, 120, '+' + gain, '#c0392b', 28);
-    if (combo >= 2) addPopup(c.seat.x, 150, combo + ' コンボ！', '#d35400', 18);
+    addPopup(c.seat.x, popY(c.seat) + 10, '+' + gain, '#c0392b', 28);
+    if (combo >= 2) addPopup(c.seat.x, popY(c.seat) + 40, combo + ' コンボ！', '#d35400', 18);
   }
 
   // ===== 描画: 寿司 =====
@@ -428,6 +455,23 @@
     ctx.beginPath();
     ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
     ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  function nigiriTopping(c0, c1) {
+    ctx.beginPath();
+    ctx.moveTo(-24, 0);
+    ctx.quadraticCurveTo(-22, -14, 0, -13);
+    ctx.quadraticCurveTo(24, -13, 25, -2);
+    ctx.quadraticCurveTo(10, 4, -24, 0);
+    ctx.closePath();
+    const g = ctx.createLinearGradient(0, -14, 0, 3);
+    g.addColorStop(0, c0); g.addColorStop(1, c1);
+    ctx.fillStyle = g; ctx.fill();
+    ctx.strokeStyle = c1; ctx.lineWidth = 1; ctx.stroke();
+  }
+  function noriBand() {
+    ctx.fillStyle = '#1f2d24';
+    ctx.beginPath(); ctx.moveTo(-5, -13); ctx.lineTo(5, -13); ctx.lineTo(6, 13); ctx.lineTo(-6, 13); ctx.closePath(); ctx.fill();
   }
 
   function drawSushi(id, x, y, s = 1) {
@@ -453,35 +497,79 @@
           ctx.restore();
         });
       }
+    } else if (id === 'miso') {
+      // 味噌汁（お椀）
+      ctx.beginPath();
+      ctx.moveTo(-22, -8);
+      ctx.bezierCurveTo(-20, 12, 20, 12, 22, -8);
+      ctx.closePath();
+      const g = ctx.createLinearGradient(0, -8, 0, 10);
+      g.addColorStop(0, '#a32020'); g.addColorStop(1, '#5e0f0f');
+      ctx.fillStyle = g; ctx.fill();
+      ctx.fillStyle = '#1a1a1a'; ctx.fillRect(-7, 7, 14, 4);
+      ellipse(0, -8, 22, 7, '#2a0b0b');
+      ellipse(0, -8, 19, 5.5, '#b8792f');
+      ellipse(-4, -9, 9, 2.5, 'rgba(255,230,180,0.35)');
+      [[-9, -9], [5, -7], [10, -10]].forEach(([px, py]) => { ctx.fillStyle = '#fffaf0'; ctx.fillRect(px - 2.5, py - 2, 5, 4); });
+      [[-2, -11], [-12, -7], [3, -6], [13, -8]].forEach(([px, py]) => ellipse(px, py, 1.8, 1.2, '#4caf50'));
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.5;
+      for (const sx of [-6, 4]) {
+        ctx.beginPath(); ctx.moveTo(sx, -16); ctx.quadraticCurveTo(sx + 4, -21, sx, -26); ctx.quadraticCurveTo(sx - 4, -30, sx, -34); ctx.stroke();
+      }
+    } else if (id === 'california') {
+      // カリフォルニアロール（裏巻き3切れ）
+      [[-14, -2], [14, -2], [0, -9]].forEach(([px, py]) => {
+        ellipse(px, py + 3, 11, 6, '#e8e1d0');
+        ellipse(px, py, 11, 9, '#fbf8ef', '#d8d0bd', 1);
+        for (let a = 0; a < Math.PI * 2; a += 0.55) ellipse(px + Math.cos(a) * 8.5, py + Math.sin(a) * 7, 1.4, 1.4, '#ff7a1a');
+        ellipse(px, py, 5.5, 4.5, '#1f2d24');
+        ellipse(px - 1.6, py, 2.4, 3, '#8bc34a');
+        ellipse(px + 1.8, py - 0.5, 2.2, 2.6, '#ff6b6b');
+        ellipse(px + 1.8, py + 1.2, 1.6, 1, '#ffffff');
+      });
     } else {
       // 握り
       ellipse(0, 4, 20, 10, '#fbf8ef', '#d8d0bd');
-      const colors = {
-        maguro:  ['#c8102e', '#8e0b20'],
-        hamachi: ['#f5dcc8', '#e7a0a0'],
-        salmon:  ['#ff8a4c', '#e2622a'],
-      }[id];
-      ctx.beginPath();
-      ctx.moveTo(-24, 0);
-      ctx.quadraticCurveTo(-22, -14, 0, -13);
-      ctx.quadraticCurveTo(24, -13, 25, -2);
-      ctx.quadraticCurveTo(10, 4, -24, 0);
-      ctx.closePath();
-      const g = ctx.createLinearGradient(0, -14, 0, 3);
-      g.addColorStop(0, colors[0]); g.addColorStop(1, colors[1]);
-      ctx.fillStyle = g; ctx.fill();
-      ctx.strokeStyle = colors[1]; ctx.lineWidth = 1; ctx.stroke();
-      if (id === 'salmon') {
-        ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 2;
-        for (let i = -14; i <= 14; i += 7) {
-          ctx.beginPath(); ctx.moveTo(i - 3, -11); ctx.quadraticCurveTo(i + 2, -6, i - 1, 0); ctx.stroke();
-        }
-      } else if (id === 'hamachi') {
-        ctx.strokeStyle = 'rgba(200,90,90,0.5)'; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.moveTo(-20, -6); ctx.quadraticCurveTo(0, -10, 22, -6); ctx.stroke();
+      if (id === 'kazunoko') {
+        nigiriTopping('#f9d55b', '#d9a91f');
+        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        for (let i = -18; i <= 18; i += 5) for (let j = -10; j <= -2; j += 4) ctx.fillRect(i + (j % 8 ? 2 : 0), j, 1.6, 1.6);
+        noriBand();
+      } else if (id === 'iwashi') {
+        nigiriTopping('#5b7590', '#dfe7ee');
+        ctx.strokeStyle = '#c9d6e2'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-20, -5); ctx.quadraticCurveTo(0, -9, 22, -4); ctx.stroke();
+        ctx.fillStyle = '#26394d';
+        for (let i = -16; i <= 16; i += 8) ellipse(i, -9, 1.6, 1.2, '#26394d');
+        // 生姜とネギ
+        ellipse(0, -14, 6, 3, '#f5e1a4', '#d9c27a', 1);
+        [[-3, -16], [2, -17], [4, -14]].forEach(([px, py]) => ellipse(px, py, 1.6, 1.6, '#7cb342'));
+      } else if (id === 'anago') {
+        nigiriTopping('#9c6233', '#5b3417');
+        ctx.strokeStyle = 'rgba(40,20,5,0.55)'; ctx.lineWidth = 1.5;
+        for (let i = -16; i <= 16; i += 8) { ctx.beginPath(); ctx.moveTo(i - 2, -12); ctx.lineTo(i + 3, -1); ctx.stroke(); }
+        ctx.strokeStyle = 'rgba(255,240,210,0.6)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-14, -10); ctx.quadraticCurveTo(0, -13, 14, -10); ctx.stroke();
+        noriBand();
       } else {
-        ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(-14, -9); ctx.quadraticCurveTo(0, -12, 14, -9); ctx.stroke();
+        const colors = {
+          maguro:  ['#c8102e', '#8e0b20'],
+          hamachi: ['#f5dcc8', '#e7a0a0'],
+          salmon:  ['#ff8a4c', '#e2622a'],
+        }[id];
+        nigiriTopping(colors[0], colors[1]);
+        if (id === 'salmon') {
+          ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 2;
+          for (let i = -14; i <= 14; i += 7) {
+            ctx.beginPath(); ctx.moveTo(i - 3, -11); ctx.quadraticCurveTo(i + 2, -6, i - 1, 0); ctx.stroke();
+          }
+        } else if (id === 'hamachi') {
+          ctx.strokeStyle = 'rgba(200,90,90,0.5)'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.moveTo(-20, -6); ctx.quadraticCurveTo(0, -10, 22, -6); ctx.stroke();
+        } else {
+          ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(-14, -9); ctx.quadraticCurveTo(0, -12, 14, -9); ctx.stroke();
+        }
       }
     }
     ctx.restore();
@@ -498,15 +586,16 @@
 
   // ===== 描画: 背景・レーン =====
   function tracePath() {
-    const { x1, x2, yTop, yBot, r } = TRACK;
     ctx.beginPath();
-    ctx.moveTo(x1, yTop); ctx.lineTo(x2, yTop);
-    ctx.arc(x2, CY, r, -Math.PI / 2, Math.PI / 2);
-    ctx.lineTo(x1, yBot);
-    ctx.arc(x1, CY, r, Math.PI / 2, Math.PI * 1.5);
+    ctx.moveTo(SEGS[0].ax, SEGS[0].ay);
+    for (const g of SEGS) {
+      if (g.type === 'line') ctx.lineTo(g.bx, g.by);
+      else ctx.arc(g.cx, g.cy, TRACK.r, g.a0, g.a0 + Math.PI / 2);
+    }
     ctx.closePath();
   }
 
+  const FLOOR_BOTTOM = BTN.y - 10;
   function drawBackground() {
     // 壁
     const g = ctx.createLinearGradient(0, 0, 0, 200);
@@ -516,13 +605,17 @@
     ctx.fillStyle = '#a5462b'; ctx.fillRect(0, 0, W, 46);
     ctx.fillStyle = '#8c3a23';
     for (let x = 0; x < W; x += 120) ctx.fillRect(x + 118, 0, 4, 46);
-    // 床/板場
-    ctx.fillStyle = '#c99a62'; ctx.fillRect(0, 205, W, 285);
+    // 床
+    ctx.fillStyle = '#c99a62'; ctx.fillRect(0, 205, W, FLOOR_BOTTOM - 205);
     ctx.fillStyle = 'rgba(0,0,0,0.05)';
-    for (let y = 215; y < 490; y += 26) ctx.fillRect(0, y, W, 2);
-    // カウンター
+    for (let y = 215; y < FLOOR_BOTTOM; y += 26) ctx.fillRect(0, y, W, 2);
+    // 奥のカウンター
     ctx.fillStyle = '#7a4a26'; ctx.fillRect(0, 188, W, 22);
     ctx.fillStyle = '#a0683a'; ctx.fillRect(0, 188, W, 6);
+    // 手前のカウンター
+    const cy = TRACK.yBot + 30;
+    ctx.fillStyle = '#7a4a26'; ctx.fillRect(0, cy, W, 20);
+    ctx.fillStyle = '#a0683a'; ctx.fillRect(0, cy, W, 6);
   }
 
   function drawBelt() {
@@ -530,22 +623,23 @@
     ctx.lineJoin = 'round';
     tracePath(); ctx.strokeStyle = '#5d6168'; ctx.lineWidth = 66; ctx.stroke();
     tracePath(); ctx.strokeStyle = '#c7ccd3'; ctx.lineWidth = 56; ctx.stroke();
-    tracePath(); ctx.strokeStyle = '#aeb4bc'; ctx.lineWidth = 2;
+    tracePath(); ctx.strokeStyle = '#aeb4bc';
     ctx.setLineDash([3, SP / 2 - 3]); ctx.lineDashOffset = -offset;
     ctx.lineWidth = 54; ctx.stroke();
     ctx.restore();
     // 内側の板場
     ctx.save();
-    const { x1, x2, yTop, yBot } = TRACK;
-    rrect(x1 - 55, yTop + 33, x2 - x1 + 110, yBot - yTop - 66, 50);
+    const { x1, x2, yTop, yBot, r } = TRACK;
+    rrect(x1 - r + 33, yTop + 33, x2 - x1 + 2 * r - 66, yBot - yTop - 66, 40);
     ctx.fillStyle = '#e9d6b4'; ctx.fill();
     ctx.strokeStyle = '#b48a55'; ctx.lineWidth = 3; ctx.stroke();
-    // まな板とネタ
-    rrect(560, 305, 170, 55, 8); ctx.fillStyle = '#f2e2c0'; ctx.fill(); ctx.strokeStyle = '#c9a874'; ctx.stroke();
-    SUSHI.forEach((s, i) => drawSushi(s.id, 585 + i * 30, 340, 0.55));
-    rrect(230, 305, 170, 55, 8); ctx.fillStyle = '#5c3a1e'; ctx.fill();
-    ctx.fillStyle = '#fbf8ef';
-    for (let i = 0; i < 6; i++) { ellipse(255 + i * 24, 333, 9, 6, '#fbf8ef'); }
+    // シャリ桶
+    ellipse(230, 345, 70, 32, '#8a5a2b', '#5c3a1e', 3);
+    ellipse(230, 340, 60, 24, '#fbf8ef');
+    for (let i = 0; i < 7; i++) ellipse(190 + i * 13, 338 + (i % 2) * 4, 5, 3, '#efe9d8');
+    // ネタケース
+    rrect(510, 300, 320, 82, 10); ctx.fillStyle = '#d6eef5'; ctx.fill(); ctx.strokeStyle = '#8fb3c0'; ctx.lineWidth = 3; ctx.stroke();
+    SUSHI.forEach((s, i) => drawSushi(s.id, 542 + (i % 5) * 64, 330 + Math.floor(i / 5) * 34, 0.55));
     ctx.restore();
   }
 
@@ -583,8 +677,9 @@
   }
 
   // ===== 描画: お客さん =====
-  function drawCustomer(seat) {
+  function drawCustomer(seat, overlay) {
     const c = seat.customer; if (!c) return;
+    const top = seat.side === 'top';
     let dy = 0, alpha = 1;
     if (c.state === 'arriving') { const t = Math.min(1, c.anim / 0.45); dy = (1 - t) * 50; alpha = t; }
     if (c.state === 'leaving') { const t = Math.min(1, c.anim / 0.6); dy = t * 60; alpha = 1 - t; }
@@ -594,37 +689,48 @@
     if (c.state === 'eating') face = 'eat';
     if (c.state === 'leaving') face = c.mood;
 
-    const x = seat.x, y = 148 + dy;
+    const counterY = top ? 188 : TRACK.yBot + 30;
+    const shake = face === 'angry' && c.state !== 'leaving' && !top ? Math.sin(performance.now() / 30) * 1.5 : 0;
+    const x = seat.x + shake, y = (top ? 148 : TRACK.yBot + 82) + dy;
+    if (!overlay) {
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.beginPath(); ctx.rect(0, 46, W, 142); ctx.clip();
+    ctx.beginPath();
+    if (top) ctx.rect(0, 46, W, counterY - 46); else ctx.rect(0, counterY + 20, W, FLOOR_BOTTOM - counterY - 20);
+    ctx.clip();
     // 体
     rrect(x - 36, y + 22, 72, 60, 22); ctx.fillStyle = c.shirt; ctx.fill();
-    // 頭
     const skin = face === 'angry' ? blend(c.skin, '#ff6b6b', 0.35) : c.skin;
-    ellipse(x, y, 26, 27, skin, 'rgba(0,0,0,0.15)');
-    // 髪
-    ctx.fillStyle = c.hair;
-    if (c.style === 0) { ctx.beginPath(); ctx.arc(x, y - 4, 27, Math.PI * 1.05, Math.PI * 1.95); ctx.fill(); }
-    else if (c.style === 1) { ctx.beginPath(); ctx.arc(x, y - 2, 28, Math.PI * 0.95, Math.PI * 2.05); ctx.fill(); ctx.fillRect(x - 28, y - 4, 8, 34); ctx.fillRect(x + 20, y - 4, 8, 34); }
-    else if (c.style === 2) { ctx.fillStyle = c.shirt; ctx.beginPath(); ctx.arc(x, y - 10, 26, Math.PI, 0); ctx.fill(); ctx.fillRect(x - 4, y - 14, 38, 6); }
-    else { for (let i = -2; i <= 2; i++) { ellipse(x + i * 10, y - 22 + Math.abs(i) * 3, 9, 9, c.hair); } }
-    // 顔
-    drawFace(x, y + 4, face, c.glasses);
-    // 食べている寿司
-    if (c.state === 'eating' && c.eating) {
-      const t = Math.min(1, c.anim / 1.1);
-      if (t < 0.25) {
-        const k = t / 0.25;
-        drawPlate(c.eating, x, 240 - k * 60, 0.8);
+    if (top) {
+      // 正面（奥の席）
+      ellipse(x, y, 26, 27, skin, 'rgba(0,0,0,0.15)');
+      ctx.fillStyle = c.hair;
+      if (c.style === 0) { ctx.beginPath(); ctx.arc(x, y - 4, 27, Math.PI * 1.05, Math.PI * 1.95); ctx.fill(); }
+      else if (c.style === 1) { ctx.beginPath(); ctx.arc(x, y - 2, 28, Math.PI * 0.95, Math.PI * 2.05); ctx.fill(); ctx.fillRect(x - 28, y - 4, 8, 34); ctx.fillRect(x + 20, y - 4, 8, 34); }
+      else if (c.style === 2) { ctx.fillStyle = c.shirt; ctx.beginPath(); ctx.arc(x, y - 10, 26, Math.PI, 0); ctx.fill(); ctx.fillRect(x - 4, y - 14, 38, 6); }
+      else { for (let i = -2; i <= 2; i++) { ellipse(x + i * 10, y - 22 + Math.abs(i) * 3, 9, 9, c.hair); } }
+      drawFace(x, y + 4, face, c.glasses);
+    } else {
+      // 後ろ姿（手前の席）
+      ellipse(x - 26, y + 2, 5, 8, skin);
+      ellipse(x + 26, y + 2, 5, 8, skin);
+      ellipse(x, y, 26, 27, skin);
+      if (c.style === 2) {
+        ellipse(x, y + 4, 26, 23, c.hair);
+        ctx.fillStyle = c.shirt; ctx.beginPath(); ctx.arc(x, y - 6, 27, Math.PI, 0); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.fillRect(x - 6, y - 8, 12, 4);
       } else {
-        ctx.globalAlpha = alpha * (1 - (t - 0.25) / 0.75);
-        drawSushi(c.eating.id, x, y + 32, 0.8 * (1 - (t - 0.25) * 0.6));
-        ctx.globalAlpha = alpha;
+        ellipse(x, y - 2, 27, 27, c.hair);
+        if (c.style === 1) { ctx.fillStyle = c.hair; rrect(x - 26, y, 52, 34, 12); ctx.fill(); }
+        if (c.style === 3) { for (let i = -2; i <= 2; i++) ellipse(x + i * 10, y - 22 + Math.abs(i) * 3, 9, 9, c.hair); }
+        ellipse(x - 8, y - 12, 7, 4, 'rgba(255,255,255,0.12)');
       }
-    }
-    if (face === 'angry' && c.state !== 'leaving') {
-      ellipse(x + 22, y - 18, 3, 5, '#5dade2');
+      // 首
+      ctx.fillStyle = skin; ctx.fillRect(x - 9, y + 22, 18, 6);
+      if (face === 'eat') {
+        // もぐもぐで頭がゆれる
+        ellipse(x + 30, y - 18, 3, 3, 'rgba(255,255,255,0.8)');
+      }
     }
     if (c.state === 'leaving' && c.mood === 'angry') {
       ctx.strokeStyle = '#999'; ctx.lineWidth = 3;
@@ -633,23 +739,45 @@
       }
     }
     ctx.restore();
+    return;
+    }
+
+    // ここから下はレーンより手前に描く
+    ctx.save(); ctx.globalAlpha = alpha;
+    if (face === 'angry' && c.state !== 'leaving') {
+      if (top) ellipse(x + 22, y - 18, 3, 5, '#5dade2');
+      else drawAngerMark(x + 22, y - 22);
+    }
+    // 食べている寿司
+    if (c.state === 'eating' && c.eating) {
+      const t = Math.min(1, c.anim / 1.1);
+      const beltY = top ? TRACK.yTop : TRACK.yBot;
+      const mouthY = top ? y + 32 : counterY + 8;
+      if (t < 0.25) {
+        drawPlate(c.eating, x, beltY + (mouthY - beltY) * (t / 0.25), 0.8);
+      } else {
+        ctx.globalAlpha = alpha * (1 - (t - 0.25) / 0.75);
+        drawSushi(c.eating.id, x, mouthY, 0.8 * (1 - (t - 0.25) * 0.6));
+      }
+    }
+    ctx.restore();
 
     // 食べた皿の山
     if (c.plates > 0 && c.state !== 'leaving') {
       for (let i = 0; i < Math.min(c.plates, 6); i++) {
-        ellipse(x + 48, 200 - i * 5, 14, 5, '#ddd', '#999', 1);
+        ellipse(seat.x + 48, counterY + 12 - i * 5, 14, 5, '#ddd', '#999', 1);
       }
     }
 
     // 吹き出し（注文）
     if (c.state === 'waiting' || c.state === 'arriving') {
       ctx.save(); ctx.globalAlpha = alpha;
-      const bx = x, by = 76 + dy * 0.3;
+      const bx = seat.x, by = top ? 76 + dy * 0.3 : TRACK.yBot - 72 + dy * 0.3;
       rrect(bx - 46, by - 28, 92, 56, 14);
       ctx.fillStyle = '#fff'; ctx.fill();
       ctx.strokeStyle = face === 'angry' ? '#c0392b' : '#a5462b'; ctx.lineWidth = 3; ctx.stroke();
       ctx.beginPath(); ctx.moveTo(bx - 8, by + 27); ctx.lineTo(bx, by + 38); ctx.lineTo(bx + 8, by + 27); ctx.fillStyle = '#fff'; ctx.fill();
-      drawSushi(c.order.id, bx, by + 2, 1);
+      drawSushi(c.order.id, bx, by + 2, c.order.id === 'miso' ? 0.85 : 1);
       // 待ち時間バー
       const bw = 76;
       ctx.fillStyle = '#eee'; ctx.fillRect(bx - bw / 2, by + 16, bw, 6);
@@ -657,6 +785,16 @@
       ctx.fillRect(bx - bw / 2, by + 16, bw * Math.max(0, frac), 6);
       ctx.restore();
     }
+  }
+
+  function drawAngerMark(x, y) {
+    ctx.save(); ctx.translate(x, y);
+    ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+    for (let i = 0; i < 4; i++) {
+      ctx.rotate(Math.PI / 2);
+      ctx.beginPath(); ctx.arc(7, 7, 5, Math.PI, Math.PI * 1.5); ctx.stroke();
+    }
+    ctx.restore();
   }
 
   function drawFace(x, y, face, glasses) {
@@ -714,8 +852,8 @@
   }
 
   function drawButtons() {
-    ctx.fillStyle = '#5a3418'; ctx.fillRect(0, 470, W, H - 470);
-    ctx.fillStyle = '#6e4220'; ctx.fillRect(0, 470, W, 8);
+    ctx.fillStyle = '#5a3418'; ctx.fillRect(0, FLOOR_BOTTOM, W, H - FLOOR_BOTTOM);
+    ctx.fillStyle = '#6e4220'; ctx.fillRect(0, FLOOR_BOTTOM, W, 8);
     for (const b of buttons) {
       const press = b.press > 0 ? 4 : 0;
       rrect(b.x, b.y + 6, b.w, b.h, 18); ctx.fillStyle = '#2e1a0b'; ctx.fill();
@@ -723,14 +861,16 @@
       ctx.fillStyle = b.press > 0 ? '#fff3d6' : '#fdf6e6'; ctx.fill();
       ctx.strokeStyle = b.sushi.plate; ctx.lineWidth = 5; ctx.stroke();
       const cx = b.x + b.w / 2, cy = b.y + press;
-      drawPlate(b.sushi, cx, cy + 92, 1.9);
-      ctx.fillStyle = '#3a2414'; ctx.font = 'bold 26px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(b.sushi.name, cx, cy + 162);
-      ctx.fillStyle = '#a5462b'; ctx.font = 'bold 18px sans-serif';
-      ctx.fillText(b.sushi.price + '円', cx, cy + 192);
-      ellipse(b.x + 22, cy + 22, 13, 13, '#e8d9bd');
-      ctx.fillStyle = '#7a5a40'; ctx.font = 'bold 15px sans-serif';
-      ctx.fillText(b.sushi.key, b.x + 22, cy + 23);
+      drawPlate(b.sushi, cx, cy + 74, 1.55);
+      ctx.fillStyle = '#3a2414'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      let fs = 24;
+      do { ctx.font = `bold ${fs}px sans-serif`; fs--; } while (ctx.measureText(b.sushi.name).width > b.w - 14 && fs > 10);
+      ctx.fillText(b.sushi.name, cx, cy + 126);
+      ctx.fillStyle = '#a5462b'; ctx.font = 'bold 17px sans-serif';
+      ctx.fillText(b.sushi.price + '円', cx, cy + 151);
+      ellipse(b.x + 20, cy + 20, 12, 12, '#e8d9bd');
+      ctx.fillStyle = '#7a5a40'; ctx.font = 'bold 14px sans-serif';
+      ctx.fillText(b.sushi.key, b.x + 20, cy + 21);
     }
   }
 
@@ -776,15 +916,16 @@
     ctx.clearRect(0, 0, W, H);
     drawBackground();
     if (state === 'title') { offset = mod((offset || 0) + 0.6, L); }
-    SEATS.forEach(drawCustomer);
+    SEATS.forEach(s => drawCustomer(s, false));
     drawBelt();
     drawChef();
     if (slots) drawPlates();
+    SEATS.forEach(s => drawCustomer(s, true));
     drawButtons();
     if (state !== 'title') drawHUD();
     if (popups) drawPopups();
     if (wrongFlash > 0) {
-      ctx.fillStyle = `rgba(120,120,120,${wrongFlash * 0.4})`; ctx.fillRect(0, 0, W, 470);
+      ctx.fillStyle = `rgba(120,120,120,${wrongFlash * 0.4})`; ctx.fillRect(0, 0, W, FLOOR_BOTTOM);
     }
   }
 
@@ -844,7 +985,7 @@
     document.getElementById('resultScore').textContent = score;
     document.getElementById('resultDetail').textContent =
       `提供 ${served} 皿 ／ 最大コンボ ${maxCombo} ／ 怒った客 ${angryCount} 人 ／ 廃棄 ${wasted} 皿`;
-    const rank = score >= 9000 ? '称号：伝説の大将' : score >= 6000 ? '称号：大将' : score >= 3500 ? '称号：板前' : score >= 1500 ? '称号：一人前' : '称号：見習い';
+    const rank = score >= 15000 ? '称号：伝説の大将' : score >= 10000 ? '称号：大将' : score >= 6000 ? '称号：板前' : score >= 2500 ? '称号：一人前' : '称号：見習い';
     document.getElementById('resultRank').textContent = rank;
     resultEl.classList.remove('hidden');
   }
@@ -854,6 +995,6 @@
   // タイトル画面用の飾り
   slots = new Array(SLOT_COUNT).fill(null);
   offset = 0;
-  [0, 4, 9, 14, 19, 24].forEach((i, n) => { slots[i] = { sushi: SUSHI[n % 5], fly: 1, dist: 0 }; });
+  SUSHI.forEach((s, n) => { slots[n * 3] = { sushi: s, fly: 1, dist: 0 }; });
   requestAnimationFrame(frame);
 })();
