@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>回転寿司へいお待ち</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game"></canvas>
+
+  <div id="title" class="overlay">
+    <div class="panel">
+      <h1>回転寿司<br><span>へいお待ち！</span></h1>
+      <ul class="howto">
+        <li>お客さんの頭の上に<b>食べたい寿司</b>が出ます。</li>
+        <li>下の<b>具材ボタン</b>を押すと、その寿司を食べたいお客さんの前のレーンに皿が置かれます。</li>
+        <li>目の前に皿があるときは、その<b>後ろの空いている所</b>に置かれます。</li>
+        <li>お客さんが取れるのは<b>目の前に流れてきた皿だけ</b>。食べたい寿司なら取ってくれます。</li>
+        <li>間違えた皿はそのまま回り続け、2周すると廃棄（−20点）。</li>
+        <li>待たせすぎると怒って帰ります。5人怒らせたら閉店！</li>
+      </ul>
+      <p class="keys">キーボード：1 マグロ / 2 ハマチ / 3 サーモン / 4 いくら / 5 うに</p>
+      <button id="startBtn" class="btn">開店する</button>
+    </div>
+  </div>
+
+  <div id="result" class="overlay hidden">
+    <div class="panel">
+      <h2 id="resultTitle">閉店！</h2>
+      <p class="score">売上 <span id="resultScore">0</span> 点</p>
+      <p id="resultDetail"></p>
+      <p class="rank" id="resultRank"></p>
+      <button id="retryBtn" class="btn">もう一度</button>
+    </div>
+  </div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>

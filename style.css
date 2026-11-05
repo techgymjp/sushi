@@ -1,0 +1,50 @@
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; height: 100%;
+  background: #2b1d14;
+  font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+  color: #3a2414;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-user-select: none; user-select: none;
+}
+#wrap {
+  position: relative;
+  width: 100vw; height: 100vh; height: 100dvh;
+  display: flex; align-items: center; justify-content: center;
+}
+canvas { display: block; touch-action: none; }
+.overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(30, 18, 10, 0.55);
+  padding: 16px;
+}
+.overlay.hidden { display: none; }
+.panel {
+  background: #fdf6e6;
+  border: 6px solid #a5462b;
+  border-radius: 18px;
+  box-shadow: 0 10px 0 #6e2c19, 0 16px 40px rgba(0,0,0,.5);
+  max-width: 560px; width: 100%;
+  max-height: 100%; overflow: auto;
+  padding: 22px 24px;
+  text-align: center;
+}
+h1 { margin: 0 0 12px; font-size: 30px; color: #a5462b; line-height: 1.2; }
+h1 span { font-size: 44px; color: #c0392b; letter-spacing: 2px; }
+h2 { margin: 0 0 8px; font-size: 34px; color: #a5462b; }
+.howto { text-align: left; margin: 0 0 10px; padding-left: 1.3em; font-size: 15px; line-height: 1.6; }
+.howto b { color: #c0392b; }
+.keys { font-size: 13px; color: #7a5a40; margin: 6px 0 14px; }
+.score { font-size: 26px; margin: 6px 0; }
+.score span { font-size: 40px; color: #c0392b; font-weight: bold; }
+.rank { font-size: 24px; font-weight: bold; color: #a5462b; }
+.btn {
+  font: inherit; font-size: 22px; font-weight: bold;
+  color: #fff; background: #c0392b;
+  border: none; border-radius: 12px;
+  padding: 12px 40px; cursor: pointer;
+  box-shadow: 0 5px 0 #7d2219;
+}
+.btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #7d2219; }
