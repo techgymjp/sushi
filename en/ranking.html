@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en" data-page-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ranking | Conveyor Sushi: Hei Omachi!</title>
+<meta name="description" content="Ranking for Conveyor Sushi: Hei Omachi!">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../pages.css">
+<script src="../i18n.js"></script>
+</head>
+<body>
+<header class="site-header">
+  <div class="inner">
+    <a class="logo" href="./">Conveyor Sushi <span>Hei Omachi!</span></a>
+    <nav class="nav">
+      <a href="./">Home</a>
+      <a href="howto.html">How to play</a>
+      <a href="ranking.html" aria-current="page">Ranking</a>
+      <a href="../game.html?lang=en" class="play">Play</a>
+      <a href="../ranking.html?lang=ja" class="lang-link" lang="ja">日本語</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="page-title">
+    <h1>Ranking</h1>
+    <p>The top 10 sushi chefs by sales</p>
+  </div>
+
+  <section>
+    <div class="panel">
+      <div id="rankBox" class="rank-page"></div>
+      <p class="rank-note">* The ranking is saved in this browser. Records from other devices or browsers are not shown.</p>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="btn-row">
+      <a class="btn" href="../game.html?lang=en">Go for a record</a>
+      <button type="button" class="btn sub" id="clearBtn">Clear records</button>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  Conveyor Sushi: Hei Omachi! / <a href="ranking.html">Ranking</a> / <a href="howto.html">How to play</a> / <a href="../game.html?lang=en">Play</a>
+</footer>
+<script src="../ranking.js"></script>
+<script>
+  const box = document.getElementById('rankBox');
+  SushiRanking.render(box, { full: true });
+  const clearBtn = document.getElementById('clearBtn');
+  clearBtn.hidden = !SushiRanking.load().length;
+  clearBtn.addEventListener('click', () => {
+    if (!confirm('This will delete all ranking records in this browser. Continue?')) return;
+    SushiRanking.clear();
+    SushiRanking.render(box, { full: true });
+    clearBtn.hidden = true;
+  });
+</script>
+</body>
+</html>

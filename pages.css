@@ -166,3 +166,4 @@ button.btn { border: none; font-family: inherit; cursor: pointer; }
   .ranking.full th:nth-child(7), .ranking.full td:nth-child(7) { display: none; }
   .ranking td, .ranking th { padding: 8px 6px; font-size: 14px; }
 }
+.nav a.lang-link { border: 2px solid rgba(255,255,255,0.6); padding: 2px 10px; }

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja">
+<html lang="ja" data-page-lang="ja">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,6 +12,17 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="pages.css">
+<script>
+  // 言語を選んだことがなく、ブラウザが日本語以外なら英語版へ
+  (function () {
+    try {
+      if (!localStorage.getItem('sushi-lang') && !/^ja\b/i.test(navigator.language || '') && !/[?&]lang=/.test(location.search)) {
+        location.replace('en/');
+      }
+    } catch (e) { /* ignore */ }
+  })();
+</script>
+<script src="i18n.js"></script>
 </head>
 <body>
 <header class="site-header">
@@ -21,7 +32,8 @@
       <a href="index.html" aria-current="page">トップ</a>
       <a href="howto.html">遊び方</a>
       <a href="ranking.html">ランキング</a>
-      <a href="game.html" class="play">あそぶ</a>
+      <a href="game.html?lang=ja" class="play">あそぶ</a>
+      <a href="en/" class="lang-link" lang="en">EN</a>
     </nav>
   </div>
 </header>
@@ -36,7 +48,7 @@
         混み合うレーンをさばいて、90秒で売上ナンバーワンの大将をめざそう！
       </p>
       <div class="btn-row">
-        <a class="btn" href="game.html">あそぶ</a>
+        <a class="btn" href="game.html?lang=ja">あそぶ</a>
         <a class="btn sub" href="howto.html">遊び方を見る</a>
       </div>
     </div>
@@ -87,14 +99,14 @@
     <h2 class="sec">さあ、開店！</h2>
     <p>コミカルなBGMにのって、どんどん寿司を流そう。</p>
     <div class="btn-row">
-      <a class="btn" href="game.html">あそぶ</a>
+      <a class="btn" href="game.html?lang=ja">あそぶ</a>
       <a class="btn sub" href="howto.html">遊び方</a>
     </div>
   </section>
 </main>
 
 <footer class="site-footer">
-  回転寿司へいお待ち！ ／ <a href="ranking.html">ランキング</a> ／ <a href="howto.html">遊び方</a> ／ <a href="game.html">あそぶ</a>
+  回転寿司へいお待ち！ ／ <a href="ranking.html">ランキング</a> ／ <a href="howto.html">遊び方</a> ／ <a href="game.html?lang=ja">あそぶ</a>
 </footer>
 </body>
 </html>

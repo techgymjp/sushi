@@ -12,34 +12,45 @@
 
   <div id="title" class="overlay">
     <div class="panel">
-      <h1>回転寿司<br><span>へいお待ち！</span></h1>
-      <p class="lead">お客さんの頭の上の寿司を見て、<br>下のボタンで「へいお待ち！」</p>
-      <p class="keys">キーボード：1〜5 上段 ／ 6〜9・0 下段 ／ M BGM切替</p>
+      <h1 data-en="Conveyor Sushi<br><span>Hei Omachi!</span>">回転寿司<br><span>へいお待ち！</span></h1>
+      <p class="lead" data-en="Check the sushi above each customer's head,<br>then tap the button below — &quot;Coming up!&quot;">お客さんの頭の上の寿司を見て、<br>下のボタンで「へいお待ち！」</p>
+      <p class="keys" data-en="Keyboard: 1–5 top row / 6–9, 0 bottom row / M toggle music">キーボード：1〜5 上段 ／ 6〜9・0 下段 ／ M BGM切替</p>
       <p class="best" id="bestScore"></p>
-      <button id="startBtn" class="btn">開店する</button>
-      <p class="links"><a href="ranking.html">ランキング</a> ／ <a href="howto.html">遊び方</a> ／ <a href="index.html">トップへ</a></p>
+      <button id="startBtn" class="btn" data-en="Open the shop!">開店する</button>
+      <p class="links"><a href="ranking.html" data-en="Ranking" data-en-href="en/ranking.html">ランキング</a> ／ <a href="howto.html" data-en="How to play" data-en-href="en/howto.html">遊び方</a> ／ <a href="index.html" data-en="Home" data-en-href="en/">トップへ</a></p>
+      <p class="lang"><a href="?lang=en" data-en="日本語" data-en-href="?lang=ja">English</a></p>
     </div>
   </div>
 
   <div id="result" class="overlay hidden">
     <div class="panel">
       <h2 id="resultTitle">閉店！</h2>
-      <p class="score">売上 <span id="resultScore">0</span> 点</p>
+      <p class="score"><span data-en="Sales ¥">売上 </span><span id="resultScore">0</span><span data-en="">円</span></p>
       <p id="resultDetail"></p>
       <p class="rank" id="resultRank"></p>
       <form id="entry" class="entry hidden">
-        <p class="newrec">ランクイン！ <span id="entryPlace"></span>位</p>
+        <p class="newrec"><span data-en="You ranked #">ランクイン！ </span><span id="entryPlace"></span><span data-en="!">位</span></p>
         <div class="entry-row">
-          <input id="nameInput" maxlength="10" placeholder="なまえ（10文字まで）" autocomplete="nickname" enterkeyhint="done">
-          <button type="submit" class="btn small">登録</button>
+          <input id="nameInput" maxlength="10" placeholder="なまえ（10文字まで）" data-en-placeholder="Your name (max 10)" autocomplete="nickname" enterkeyhint="done">
+          <button type="submit" class="btn small" data-en="Save">登録</button>
         </div>
       </form>
       <div id="rankBox" class="rank-box"></div>
-      <button id="retryBtn" class="btn">もう一度</button>
-      <p class="links"><a href="ranking.html">ランキング</a> ／ <a href="howto.html">遊び方</a> ／ <a href="index.html">トップへ</a></p>
+      <div class="share">
+        <p class="share-label" data-en="Share your result">結果をシェア</p>
+        <div class="share-row">
+          <button type="button" id="shareX" class="share-btn x" aria-label="X">𝕏 <span data-en="Post">ポスト</span></button>
+          <button type="button" id="shareLine" class="share-btn line">LINE</button>
+          <button type="button" id="shareMore" class="share-btn more" data-en="More">その他</button>
+        </div>
+        <p id="shareMsg" class="share-msg" aria-live="polite"></p>
+      </div>
+      <button id="retryBtn" class="btn" data-en="Play again">もう一度</button>
+      <p class="links"><a href="ranking.html" data-en="Ranking" data-en-href="en/ranking.html">ランキング</a> ／ <a href="howto.html" data-en="How to play" data-en-href="en/howto.html">遊び方</a> ／ <a href="index.html" data-en="Home" data-en-href="en/">トップへ</a></p>
     </div>
   </div>
 </div>
+<script src="i18n.js"></script>
 <script src="ranking.js"></script>
 <script src="game.js"></script>
 </body>

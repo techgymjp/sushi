@@ -4,6 +4,8 @@ window.SushiRanking = (() => {
   const KEY = 'sushi-ranking-v1';
   const NAME_KEY = 'sushi-name';
   const MAX = 10;
+  const EN = !!(window.SushiLang && window.SushiLang.isEn);
+  const yen = n => EN ? '¥' + n.toLocaleString() : n.toLocaleString() + '円';
 
   function load() {
     try {
@@ -27,7 +29,7 @@ window.SushiRanking = (() => {
   function add(rec) {
     const entry = {
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      name: (rec.name || '').trim().slice(0, 10) || '名無しの板前',
+      name: (rec.name || '').trim().slice(0, 10) || (EN ? 'Anonymous Chef' : '名無しの板前'),
       score: rec.score, served: rec.served || 0, combo: rec.combo || 0, date: Date.now(),
     };
     const list = sort([...load(), entry]).slice(0, MAX);
@@ -43,7 +45,10 @@ window.SushiRanking = (() => {
   function clear() { try { localStorage.removeItem(KEY); } catch (e) { /* ignore */ } }
 
   function title(score) {
-    return score >= 15000 ? '伝説の大将' : score >= 10000 ? '大将' : score >= 6000 ? '板前' : score >= 2500 ? '一人前' : '見習い';
+    const t = EN
+      ? ['Legendary Master', 'Master Chef', 'Sushi Chef', 'Skilled Cook', 'Apprentice']
+      : ['伝説の大将', '大将', '板前', '一人前', '見習い'];
+    return score >= 15000 ? t[0] : score >= 10000 ? t[1] : score >= 6000 ? t[2] : score >= 2500 ? t[3] : t[4];
   }
 
   function fmtDate(t) {
@@ -58,13 +63,15 @@ window.SushiRanking = (() => {
     if (!list.length) {
       const p = document.createElement('p');
       p.className = 'rank-empty';
-      p.textContent = 'まだ記録がありません。最初の大将になろう！';
+      p.textContent = EN ? 'No records yet. Be the first master chef!' : 'まだ記録がありません。最初の大将になろう！';
       container.appendChild(p);
       return;
     }
     const table = document.createElement('table');
     table.className = 'ranking' + (full ? ' full' : '');
-    const head = full ? ['順位', 'なまえ', '売上', '提供', '最大コンボ', '称号', '日付'] : ['順位', 'なまえ', '売上'];
+    const head = EN
+      ? (full ? ['Rank', 'Name', 'Sales', 'Served', 'Max combo', 'Title', 'Date'] : ['Rank', 'Name', 'Sales'])
+      : (full ? ['順位', 'なまえ', '売上', '提供', '最大コンボ', '称号', '日付'] : ['順位', 'なまえ', '売上']);
     const thead = table.createTHead().insertRow();
     head.forEach(h => { const th = document.createElement('th'); th.textContent = h; thead.appendChild(th); });
     const tb = table.createTBody();
@@ -73,8 +80,8 @@ window.SushiRanking = (() => {
       if (r.id === highlight) tr.className = 'me';
       const medal = ['🥇', '🥈', '🥉'][i] || (i + 1);
       const cells = full
-        ? [medal, r.name, r.score.toLocaleString() + '点', r.served + '皿', r.combo, title(r.score), fmtDate(r.date)]
-        : [medal, r.name, r.score.toLocaleString() + '点'];
+        ? [medal, r.name, yen(r.score), EN ? r.served : r.served + '皿', r.combo, title(r.score), fmtDate(r.date)]
+        : [medal, r.name, yen(r.score)];
       cells.forEach((c, j) => { const td = tr.insertCell(); td.textContent = c; if (j === 0) td.className = 'place'; });
     });
     container.appendChild(table);

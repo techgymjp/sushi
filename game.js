@@ -6,17 +6,39 @@
   const GAME_TIME = 90;      // 秒
   const ANGRY_LIMIT = 5;     // 怒って帰った人数の上限
 
+  const EN = !!(window.SushiLang && window.SushiLang.isEn);
+  const SHARE_URL = 'https://techgym.jp/column/claude-code-game-sushi/';
+  const TX = EN ? {
+    full: 'Lane is full!', wrong: 'Oops, wrong one!', waste: 'Wasted −¥20', leave: "I'm leaving!", thanks: 'Thanks!',
+    combo: n => n + ' combo!', shout: 'Coming up!', yen: p => '¥' + p,
+    score: n => 'Sales ¥' + n.toLocaleString(), time: n => 'Time ' + n + 's', angry: '😠',
+    closed: 'Too many angry customers… Closed!', done: "That's a wrap for today!",
+    detail: (a, b, c, d) => `Served ${a} · Max combo ${b} · Angry ${c} · Wasted ${d}`,
+    rank: t => 'Title: ' + t, best: n => `Best: ¥${n.toLocaleString()}`,
+    shareText: (n, t) => `I made ¥${n.toLocaleString()} in sales and earned the title "${t}" in Conveyor Sushi: Hei Omachi! 🍣 #HeiOmachi`,
+    copied: 'Copied to clipboard!', copyFail: 'Could not copy.', title: 'Play | Conveyor Sushi: Hei Omachi!',
+  } : {
+    full: 'レーンがいっぱい！', wrong: 'あっ、違った！', waste: '廃棄 −20円', leave: 'もう帰る！', thanks: 'ごちそうさま！',
+    combo: n => n + ' コンボ！', shout: 'へいお待ち！', yen: p => p + '円',
+    score: n => '売上 ' + n.toLocaleString() + '円', time: n => 'のこり ' + n + ' 秒', angry: '怒',
+    closed: 'お客さんが怒って閉店…', done: '本日の営業終了！',
+    detail: (a, b, c, d) => `提供 ${a} 皿 ／ 最大コンボ ${b} ／ 怒った客 ${c} 人 ／ 廃棄 ${d} 皿`,
+    rank: t => '称号：' + t, best: n => `自己ベスト ${n.toLocaleString()}円`,
+    shareText: (n, t) => `「回転寿司へいお待ち！」で売上${n.toLocaleString()}円！称号は「${t}」でした🍣 #へいお待ち`,
+    copied: 'コピーしました！', copyFail: 'コピーできませんでした', title: 'あそぶ｜回転寿司へいお待ち！',
+  };
+
   const SUSHI = [
-    { id: 'maguro',     name: 'マグロ',     price: 150, plate: '#c0392b', key: '1' },
-    { id: 'hamachi',    name: 'ハマチ',     price: 150, plate: '#2e86c1', key: '2' },
-    { id: 'salmon',     name: 'サーモン',   price: 120, plate: '#27ae60', key: '3' },
-    { id: 'ikura',      name: 'いくら',     price: 250, plate: '#d4ac0d', key: '4' },
-    { id: 'uni',        name: 'うに',       price: 300, plate: '#1c1c1c', key: '5' },
-    { id: 'kazunoko',   name: '数の子',     price: 200, plate: '#e67e22', key: '6' },
-    { id: 'iwashi',     name: 'イワシ',     price: 120, plate: '#95a5a6', key: '7' },
-    { id: 'miso',       name: '味噌汁',     price: 180, plate: '#8e44ad', key: '8' },
-    { id: 'california', name: 'カリフォルニアロール', lines: ['カリフォルニア', 'ロール'], price: 200, plate: '#e84393', key: '9' },
-    { id: 'anago',      name: '穴子',       price: 200, plate: '#6d4c41', key: '0' },
+    { id: 'maguro',     name: EN ? 'Tuna' : 'マグロ',     price: 150, plate: '#c0392b', key: '1' },
+    { id: 'hamachi',    name: EN ? 'Yellowtail' : 'ハマチ',     price: 150, plate: '#2e86c1', key: '2' },
+    { id: 'salmon',     name: EN ? 'Salmon' : 'サーモン',   price: 120, plate: '#27ae60', key: '3' },
+    { id: 'ikura',      name: EN ? 'Salmon Roe' : 'いくら', lines: EN ? ['Salmon', 'Roe'] : null,     price: 250, plate: '#d4ac0d', key: '4' },
+    { id: 'uni',        name: EN ? 'Sea Urchin' : 'うに', lines: EN ? ['Sea', 'Urchin'] : null,       price: 300, plate: '#1c1c1c', key: '5' },
+    { id: 'kazunoko',   name: EN ? 'Herring Roe' : '数の子', lines: EN ? ['Herring', 'Roe'] : null,     price: 200, plate: '#e67e22', key: '6' },
+    { id: 'iwashi',     name: EN ? 'Sardine' : 'イワシ',     price: 120, plate: '#95a5a6', key: '7' },
+    { id: 'miso',       name: EN ? 'Miso Soup' : '味噌汁', lines: EN ? ['Miso', 'Soup'] : null,     price: 180, plate: '#8e44ad', key: '8' },
+    { id: 'california', name: EN ? 'California Roll' : 'カリフォルニアロール', lines: EN ? ['California', 'Roll'] : ['カリフォルニア', 'ロール'], price: 200, plate: '#e84393', key: '9' },
+    { id: 'anago',      name: EN ? 'Sea Eel' : '穴子',       price: 200, plate: '#6d4c41', key: '0' },
   ];
 
   // ===== レイアウト =====
@@ -26,6 +48,7 @@
   const FLY_TIME = 0.28;
   const mod = (a, m) => ((a % m) + m) % m;
   let layoutReady = false;
+  const TOUCH = window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches;
   const wantPortrait = () => window.innerWidth / window.innerHeight < 0.8;
 
   function buildLayout(portrait) {
@@ -296,7 +319,8 @@
   const HAIRS = ['#2b1b10', '#4a3020', '#111', '#7a5230', '#9a9a9a', '#b5651d'];
   const SHIRTS = ['#3867d6', '#20bf6b', '#eb3b5a', '#8854d0', '#fa8231', '#4b6584', '#0fb9b1'];
   const pick = arr => arr[Math.floor(Math.random() * arr.length)];
-  const popY = seat => seat.side === 'top' ? 110 : 575;
+  const popY = seat => seat.side === 'top' ? 84 : TRACK.yBot - 80;
+  const centerPop = () => ({ x: W / 2, y: (TRACK.yTop + TRACK.yBot) / 2 + 20 });
 
   function newOrder(c) {
     c.order = pick(SUSHI);
@@ -351,7 +375,7 @@
     }
     if (idx < 0) {
       sfx.full();
-      addPopup(CHEF.x, CHEF.y - 60, 'レーンがいっぱい！', '#c0392b', 22);
+      addPopup(centerPop().x, centerPop().y, TX.full, '#c0392b', 24);
       return;
     }
     slots[idx] = { sushi, target, fly: 0, dist: 0, from: { x: CHEF.x, y: CHEF.y } };
@@ -362,7 +386,7 @@
       sfx.wrong();
       wrongFlash = 0.4;
       combo = 0;
-      addPopup(CHEF.x, CHEF.y - 60, 'あっ、違った！', '#7f8c8d', 20);
+      addPopup(centerPop().x, centerPop().y, TX.wrong, '#7f8c8d', 22);
     }
   }
 
@@ -405,7 +429,7 @@
         slots[i] = null;
         wasted++; score = Math.max(0, score - 20);
         sfx.waste();
-        addPopup(pos.x, pos.y - 30, '廃棄 −20', '#7f8c8d', 20);
+        addPopup(pos.x, pos.y - 30, TX.waste, '#7f8c8d', 20);
       }
     }
 
@@ -422,7 +446,7 @@
           c.state = 'leaving'; c.mood = 'angry'; c.anim = 0;
           angryCount++; combo = 0;
           sfx.angry();
-          addPopup(seat.x, popY(seat), 'もう帰る！', '#c0392b', 26);
+          addPopup(seat.x, popY(seat), TX.leave, '#c0392b', 26);
         }
       } else if (c.state === 'eating') {
         if (c.anim > 1.1) {
@@ -431,7 +455,7 @@
             newOrder(c); c.anim = 0;
           } else {
             c.state = 'leaving'; c.mood = 'happy'; c.anim = 0;
-            addPopup(seat.x, popY(seat), 'ごちそうさま！', '#a5462b', 22);
+            addPopup(seat.x, popY(seat), TX.thanks, '#a5462b', 22);
           }
         }
       } else if (c.state === 'leaving') {
@@ -462,8 +486,8 @@
     score += gain; served++;
     c.state = 'eating'; c.anim = 0; c.eating = p.sushi; c.mood = 'happy';
     sfx.serve();
-    addPopup(c.seat.x, popY(c.seat) + 10, '+' + gain, '#c0392b', 28);
-    if (combo >= 2) addPopup(c.seat.x, popY(c.seat) + 40, combo + ' コンボ！', '#d35400', 18);
+    addPopup(c.seat.x, popY(c.seat), '+' + gain, '#c0392b', 28);
+    if (combo >= 2) addPopup(c.seat.x, popY(c.seat) + 26, TX.combo(combo), '#d35400', 18);
   }
 
   // ===== 描画: 寿司 =====
@@ -694,7 +718,7 @@
       rrect(x + 26, y - 58, 130, 36, 12); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#a5462b'; ctx.lineWidth = 3; ctx.stroke();
       ctx.beginPath(); ctx.moveTo(x + 34, y - 26); ctx.lineTo(x + 22, y - 14); ctx.lineTo(x + 50, y - 24); ctx.fillStyle = '#fff'; ctx.fill();
       ctx.fillStyle = '#c0392b'; ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('へいお待ち！', x + 91, y - 40);
+      ctx.fillText(TX.shout, x + 91, y - 40);
       ctx.restore();
     }
   }
@@ -795,11 +819,17 @@
     // 吹き出し（注文）
     if (c.state === 'waiting' || c.state === 'arriving') {
       ctx.save(); ctx.globalAlpha = alpha;
-      const bx = seat.x, by = top ? 76 + dy * 0.3 : TRACK.yBot - 72 + dy * 0.3;
+      const { bx, by } = bubblePos(seat, dy);
       rrect(bx - 46, by - 28, 92, 56, 14);
       ctx.fillStyle = '#fff'; ctx.fill();
       ctx.strokeStyle = face === 'angry' ? '#c0392b' : '#a5462b'; ctx.lineWidth = 3; ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(bx - 8, by + 27); ctx.lineTo(bx, by + 38); ctx.lineTo(bx + 8, by + 27); ctx.fillStyle = '#fff'; ctx.fill();
+      // しっぽは席の位置を指す
+      const tipX = seat.x, tipY = top ? by + 38 : TRACK.yBot - 34 + dy * 0.3;
+      const baseX = Math.max(bx - 30, Math.min(bx + 30, tipX));
+      ctx.beginPath(); ctx.moveTo(baseX - 8, by + 27); ctx.lineTo(tipX, tipY); ctx.lineTo(baseX + 8, by + 27); ctx.closePath();
+      ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.strokeStyle = face === 'angry' ? '#c0392b' : '#a5462b'; ctx.lineWidth = 2;
+      if (tipY > by + 38) ctx.stroke();
       drawSushi(c.order.id, bx, by + 2, c.order.id === 'miso' ? 0.85 : 1);
       // 待ち時間バー
       const bw = 76;
@@ -808,6 +838,16 @@
       ctx.fillRect(bx - bw / 2, by + 16, bw * Math.max(0, frac), 6);
       ctx.restore();
     }
+  }
+
+  // 吹き出しの位置。手前の端の席はレーンの角に重なるので、内側へずらして一段上げる
+  function bubblePos(seat, dy) {
+    if (seat.side === 'top') return { bx: seat.x, by: 76 + dy * 0.3 };
+    const { x1, x2, yBot, r } = TRACK;
+    const minX = x1 + 46 - 2, maxX = x2 - 46 + 2;
+    const bx = Math.max(minX, Math.min(maxX, seat.x));
+    const by = (bx !== seat.x ? yBot - 132 : yBot - 72) + dy * 0.3;
+    return { bx, by };
   }
 
   function drawAngerMark(x, y) {
@@ -893,11 +933,13 @@
       do { ctx.font = `bold ${fs}px sans-serif`; fs--; } while (ctx.measureText(widest).width > b.w - 10 && fs > 9);
       lines.forEach((t, k) => ctx.fillText(t, cx, cy + BTN.nameY + (k - (lines.length - 1) / 2) * (fs + 2)));
       ctx.fillStyle = '#a5462b'; ctx.font = `bold ${BTN.priceFont}px sans-serif`;
-      ctx.fillText(b.sushi.price + '円', cx, cy + BTN.priceY);
-      const kr = BTN.key, kx = b.x + kr + 8;
-      ellipse(kx, cy + kr + 8, kr, kr, '#e8d9bd');
-      ctx.fillStyle = '#7a5a40'; ctx.font = 'bold 14px sans-serif';
-      ctx.fillText(b.sushi.key, kx, cy + kr + 9);
+      ctx.fillText(TX.yen(b.sushi.price), cx, cy + BTN.priceY);
+      if (!TOUCH) {
+        const kr = BTN.key, kx = b.x + kr + 8;
+        ellipse(kx, cy + kr + 8, kr, kr, '#e8d9bd');
+        ctx.fillStyle = '#7a5a40'; ctx.font = 'bold 14px sans-serif';
+        ctx.fillText(b.sushi.key, kx, cy + kr + 9);
+      }
     }
   }
 
@@ -906,13 +948,13 @@
     const fs = PORTRAIT ? 19 : 22, gap = PORTRAIT ? 19 : 26, cr = PORTRAIT ? 8 : 10;
     ctx.textBaseline = 'middle'; ctx.font = `bold ${fs}px sans-serif`;
     ctx.fillStyle = '#fff'; ctx.textAlign = 'left';
-    ctx.fillText('売上 ' + score + ' 点', PORTRAIT ? 12 : 20, 23);
+    ctx.fillText(TX.score(score), PORTRAIT ? 12 : 20, 23);
     ctx.textAlign = 'center';
     const left = Math.max(0, GAME_TIME - elapsed);
     ctx.fillStyle = left < 10 ? '#ffd166' : '#fff';
-    ctx.fillText('のこり ' + Math.ceil(left) + ' 秒', PORTRAIT ? 254 : W / 2, 23);
+    ctx.fillText(TX.time(Math.ceil(left)), PORTRAIT ? 254 : W / 2, 23);
     ctx.textAlign = 'right'; ctx.fillStyle = '#fff';
-    ctx.fillText('怒', W - 20 - ANGRY_LIMIT * gap - 2, 23);
+    ctx.fillText(TX.angry, W - 20 - ANGRY_LIMIT * gap - 2, 23);
     for (let i = 0; i < ANGRY_LIMIT; i++) {
       ellipse(W - 20 - cr - i * gap, 23, cr, cr, i < angryCount ? '#e74c3c' : 'rgba(255,255,255,0.25)');
     }
@@ -1010,11 +1052,11 @@
     const closed = angryCount >= ANGRY_LIMIT;
     BGM.stop();
     BGM.jingle(!closed);
-    document.getElementById('resultTitle').textContent = closed ? 'お客さんが怒って閉店…' : '本日の営業終了！';
-    document.getElementById('resultScore').textContent = score;
-    document.getElementById('resultDetail').textContent =
-      `提供 ${served} 皿 ／ 最大コンボ ${maxCombo} ／ 怒った客 ${angryCount} 人 ／ 廃棄 ${wasted} 皿`;
-    document.getElementById('resultRank').textContent = '称号：' + Ranking.title(score);
+    document.getElementById('resultTitle').textContent = closed ? TX.closed : TX.done;
+    document.getElementById('resultScore').textContent = score.toLocaleString();
+    document.getElementById('resultDetail').textContent = TX.detail(served, maxCombo, angryCount, wasted);
+    document.getElementById('resultRank').textContent = TX.rank(Ranking.title(score));
+    shareMsg.textContent = '';
     // ランキング
     const place = Ranking.placeOf(score);
     if (place) {
@@ -1045,9 +1087,44 @@
   });
   function updateBest() {
     const b = Ranking.best();
-    document.getElementById('bestScore').textContent = b ? `自己ベスト ${b.toLocaleString()} 点` : '';
+    document.getElementById('bestScore').textContent = b ? TX.best(b) : '';
   }
   updateBest();
+
+  // ===== シェア =====
+  const shareMsg = document.getElementById('shareMsg');
+  const shareText = () => TX.shareText(score, Ranking.title(score));
+  const openWin = url => window.open(url, '_blank', 'noopener');
+  document.getElementById('shareX').addEventListener('click', () => {
+    openWin('https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText()) + '&url=' + encodeURIComponent(SHARE_URL));
+  });
+  document.getElementById('shareLine').addEventListener('click', () => {
+    openWin('https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(SHARE_URL) + '&text=' + encodeURIComponent(shareText()));
+  });
+  const moreBtn = document.getElementById('shareMore');
+  moreBtn.addEventListener('click', async () => {
+    const text = shareText();
+    if (navigator.share) {
+      try { await navigator.share({ title: document.title, text, url: SHARE_URL }); } catch (e) { /* キャンセル */ }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text + '\n' + SHARE_URL);
+      shareMsg.textContent = TX.copied;
+    } catch (e) {
+      shareMsg.textContent = TX.copyFail;
+    }
+  });
+
+  // ===== HTML の英語化 =====
+  if (EN) {
+    document.title = TX.title;
+    document.querySelectorAll('[data-en]').forEach(el => { el.innerHTML = el.dataset.en; });
+    document.querySelectorAll('[data-en-placeholder]').forEach(el => { el.placeholder = el.dataset.enPlaceholder; });
+    document.querySelectorAll('[data-en-href]').forEach(el => { el.href = el.dataset.enHref; });
+  }
+  // 共有メニューが使えない環境では「リンクをコピー」に
+  if (!navigator.share) moreBtn.textContent = EN ? 'Copy link' : 'リンクをコピー';
   document.getElementById('startBtn').addEventListener('click', start);
   document.getElementById('retryBtn').addEventListener('click', start);
 

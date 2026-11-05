@@ -79,3 +79,18 @@ table.ranking { width: 100%; border-collapse: collapse; font-size: 15px; backgro
   .score span { font-size: 34px; }
   .panel { padding: 18px 16px; }
 }
+.lang { margin: 10px 0 0; font-size: 14px; }
+.lang a { color: #7a5a40; }
+.share { margin: 0 0 16px; }
+.share-label { margin: 0 0 6px; font-size: 14px; font-weight: bold; color: #7a5a40; }
+.share-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.share-btn {
+  font: inherit; font-size: 15px; font-weight: bold; color: #fff;
+  border: none; border-radius: 999px; padding: 8px 18px; cursor: pointer;
+}
+.share-btn.x { background: #111; }
+.share-btn.line { background: #06c755; }
+.share-btn.more { background: #fff; color: #a5462b; border: 2px solid #d8c4a4; padding: 6px 16px; }
+.share-btn:active { transform: translateY(2px); }
+.share-msg { min-height: 1.2em; margin: 6px 0 0; font-size: 13px; color: #27ae60; }
+@media (hover: none) and (pointer: coarse) { .keys { display: none; } }
