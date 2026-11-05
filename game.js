@@ -97,6 +97,135 @@
     full() { tone(120, 0.25, 'square', 0.06); },
   };
 
+  // ===== BGM（コミカルなオリジナル曲を WebAudio で生成） =====
+  const BGM = (() => {
+    const midi = n => 440 * Math.pow(2, (n - 69) / 12);
+    // メロディ: 1小節 = 8分音符×8、0は休符
+    const MEL = [
+      79, 0, 76, 0, 79, 0, 76, 0,
+      77, 76, 75, 76, 72, 0, 0, 0,
+      74, 0, 77, 0, 74, 0, 77, 0,
+      79, 78, 79, 81, 79, 0, 0, 0,
+      79, 0, 76, 0, 79, 0, 84, 0,
+      83, 81, 79, 77, 76, 0, 72, 0,
+      74, 0, 77, 76, 74, 0, 71, 0,
+      72, 0, 79, 0, 72, 0, 0, 0,
+    ];
+    // 各小節のコード [ルート, 3度, 5度]
+    const CHORDS = [
+      [48, 52, 55], [48, 52, 55], [43, 50, 53], [43, 47, 50],
+      [48, 52, 55], [41, 45, 48], [43, 47, 53], [48, 52, 55],
+    ];
+    const STEPS = MEL.length;
+    let master = null, noise = null, timer = null, step = 0, nextTime = 0, tempoFn = () => 140;
+    let enabled = true;
+    try { enabled = localStorage.getItem('sushi-bgm') !== 'off'; } catch (e) { /* ignore */ }
+
+    function setup() {
+      const a = actx;
+      if (!a || master) return;
+      master = a.createGain();
+      master.gain.value = enabled ? 0.55 : 0;
+      master.connect(a.destination);
+      noise = a.createBuffer(1, a.sampleRate * 0.2, a.sampleRate);
+      const d = noise.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    function osc(type, freq, t, dur, vol, { slideTo, filter } = {}) {
+      const a = actx;
+      const o = a.createOscillator(), g = a.createGain();
+      o.type = type; o.frequency.setValueAtTime(freq, t);
+      if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      let node = o;
+      if (filter) {
+        const f = a.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = filter;
+        o.connect(f); node = f;
+      }
+      node.connect(g).connect(master);
+      o.start(t); o.stop(t + dur + 0.02);
+    }
+    function woodblock(t, vol) {
+      const a = actx;
+      const s = a.createBufferSource(); s.buffer = noise;
+      const f = a.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2400; f.Q.value = 8;
+      const g = a.createGain();
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+      s.connect(f).connect(g).connect(master);
+      s.start(t); s.stop(t + 0.06);
+    }
+    function scheduleStep(i, t, sd) {
+      const bar = Math.floor(i / 8), beat = i % 8;
+      const ch = CHORDS[bar];
+      // メロディ（ピコピコ木琴風・スタッカート）
+      const n = MEL[i];
+      if (n) {
+        osc('square', midi(n), t, sd * 0.9, 0.07, { filter: 2600 });
+        osc('triangle', midi(n + 12), t, sd * 0.6, 0.04);
+      }
+      // ブンチャッ（オンパ）ベース
+      if (beat === 0) osc('triangle', midi(ch[0]), t, sd * 1.6, 0.22);
+      if (beat === 4) osc('triangle', midi(ch[2] - 12), t, sd * 1.6, 0.2);
+      if (beat === 2 || beat === 6) {
+        ch.forEach(c => osc('square', midi(c + 12), t, sd * 0.5, 0.025, { filter: 1800 }));
+      }
+      // ポクポク木魚
+      if (beat % 2 === 1) woodblock(t, beat === 7 ? 0.35 : 0.18);
+      // 4小節目と8小節目の最後に「ひゅ〜ん」「ぼよ〜ん」
+      if (bar === 3 && beat === 6) osc('sine', 600, t, sd * 2, 0.08, { slideTo: 1500 });
+      if (bar === 7 && beat === 5) osc('sine', 1600, t, sd * 3, 0.09, { slideTo: 300 });
+      if (bar === 7 && beat === 7) {
+        const o = actx.createOscillator(), g = actx.createGain(), lfo = actx.createOscillator(), lg = actx.createGain();
+        o.type = 'triangle'; o.frequency.value = 110;
+        lfo.frequency.value = 14; lg.gain.value = 25;
+        lfo.connect(lg).connect(o.frequency);
+        g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.0001, t + sd * 1.8);
+        o.connect(g).connect(master);
+        o.start(t); lfo.start(t); o.stop(t + sd * 1.9); lfo.stop(t + sd * 1.9);
+      }
+    }
+    function tick() {
+      if (!actx) return;
+      const ahead = actx.currentTime + 0.15;
+      while (nextTime < ahead) {
+        const sd = 60 / tempoFn() / 2;
+        scheduleStep(step, nextTime, sd);
+        nextTime += sd;
+        step = (step + 1) % STEPS;
+      }
+    }
+    return {
+      start(fn) {
+        if (!actx) return;
+        setup(); this.stop();
+        tempoFn = fn; step = 0; nextTime = actx.currentTime + 0.08;
+        timer = setInterval(tick, 25); tick();
+      },
+      stop() { if (timer) { clearInterval(timer); timer = null; } },
+      jingle(happy) {
+        if (!actx) return;
+        setup();
+        const t = actx.currentTime + 0.05;
+        const notes = happy ? [72, 76, 79, 84, 0, 84] : [79, 78, 77, 76];
+        notes.forEach((n, i) => n && osc('square', midi(n), t + i * 0.12, happy && i === 5 ? 0.5 : 0.18, 0.08, { filter: 2600 }));
+        if (!happy) osc('sine', 500, t + 0.5, 0.8, 0.1, { slideTo: 120 });
+      },
+      get enabled() { return enabled; },
+      toggle() {
+        enabled = !enabled;
+        try { localStorage.setItem('sushi-bgm', enabled ? 'on' : 'off'); } catch (e) { /* ignore */ }
+        if (master) master.gain.setTargetAtTime(enabled ? 0.55 : 0, actx.currentTime, 0.05);
+      },
+    };
+  })();
+  const bgmTempo = () => {
+    const left = GAME_TIME - elapsed;
+    return left < 10 ? 176 : 138 + 26 * difficulty();
+  };
+  const BGM_BTN = { x: 668, y: 7, w: 64, h: 32 };
+
   // ===== 状態 =====
   let state = 'title';
   let elapsed, score, served, angryCount, wasted, combo, maxCombo;
@@ -619,6 +748,13 @@
     for (let i = 0; i < ANGRY_LIMIT; i++) {
       ellipse(W - 30 - i * 26, 23, 10, 10, i < angryCount ? '#e74c3c' : 'rgba(255,255,255,0.25)');
     }
+    // BGM ON/OFF ボタン
+    const bb = BGM_BTN;
+    rrect(bb.x, bb.y, bb.w, bb.h, 10);
+    ctx.fillStyle = BGM.enabled ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)'; ctx.fill();
+    ctx.textAlign = 'center'; ctx.font = 'bold 15px sans-serif';
+    ctx.fillStyle = BGM.enabled ? '#fff' : 'rgba(255,255,255,0.5)';
+    ctx.fillText(BGM.enabled ? '♪ ON' : '♪ OFF', bb.x + bb.w / 2, bb.y + bb.h / 2 + 1);
     ctx.restore();
   }
 
@@ -670,6 +806,8 @@
     e.preventDefault();
     const r = canvas.getBoundingClientRect();
     const x = (e.clientX - r.left) * W / r.width, y = (e.clientY - r.top) * H / r.height;
+    const bb = BGM_BTN;
+    if (x >= bb.x && x <= bb.x + bb.w && y >= bb.y && y <= bb.y + bb.h) { audio(); BGM.toggle(); return; }
     for (const b of buttons) {
       if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) { pressButton(b); return; }
     }
@@ -678,8 +816,13 @@
     const b = buttons.find(b => b.sushi.key === e.key);
     if (b) pressButton(b);
     if ((e.key === 'Enter' || e.key === ' ') && state !== 'playing') start();
+    if (e.key === 'm' || e.key === 'M') { audio(); BGM.toggle(); }
   });
-  document.addEventListener('visibilitychange', () => { last = performance.now(); });
+  document.addEventListener('visibilitychange', () => {
+    last = performance.now();
+    if (!actx) return;
+    if (document.hidden) actx.suspend(); else actx.resume();
+  });
 
   // ===== 画面遷移 =====
   const titleEl = document.getElementById('title');
@@ -688,12 +831,15 @@
     audio();
     reset();
     state = 'playing';
+    BGM.start(bgmTempo);
     titleEl.classList.add('hidden');
     resultEl.classList.add('hidden');
   }
   function endGame() {
     state = 'result';
     const closed = angryCount >= ANGRY_LIMIT;
+    BGM.stop();
+    BGM.jingle(!closed);
     document.getElementById('resultTitle').textContent = closed ? 'お客さんが怒って閉店…' : '本日の営業終了！';
     document.getElementById('resultScore').textContent = score;
     document.getElementById('resultDetail').textContent =
