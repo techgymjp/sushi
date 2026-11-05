@@ -20,7 +20,7 @@
 | うに | 軍艦 | 300 |
 
 ## 公開（GitHub Pages）
-ビルド不要の静的ファイルです。リポジトリの Settings → Pages で
-「Deploy from a branch」→ `main` / `(root)` を選ぶと公開されます。
+https://techgymjp.github.io/sushi/
 
+`main` にプッシュすると `.github/workflows/pages.yml` が自動で GitHub Pages にデプロイします。
 ローカルでは `index.html` をブラウザで開くだけで遊べます。
