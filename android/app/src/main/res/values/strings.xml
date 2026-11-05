@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">へいお待ち</string>
+    <string name="title_activity_main">へいお待ち</string>
+    <string name="package_name">jp.techgym.sushi</string>
+    <string name="custom_url_scheme">jp.techgym.sushi</string>
+    <!-- AdMob のアプリ ID。今は Google 公式のテスト用。AdMob でアプリを登録したら本番の ID に差し替える -->
+    <string name="admob_app_id">ca-app-pub-3940256099942544~3347511713</string>
+</resources>

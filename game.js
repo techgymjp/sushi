@@ -15,8 +15,13 @@
     closed: 'Too many angry customers… Closed!', done: "That's a wrap for today!",
     detail: (a, b, c, d) => `Served ${a} · Max combo ${b} · Angry ${c} · Wasted ${d}`,
     rank: t => 'Title: ' + t, best: n => `Best: ¥${n.toLocaleString()}`,
-    shareText: (n, t) => `I made ¥${n.toLocaleString()} in sales and earned the title "${t}" in Conveyor Sushi: Hei Omachi! 🍣 #HeiOmachi`,
+    shareText: (n, t, r) => `I made ¥${n.toLocaleString()} in sales${r ? ` (called back ${r} customer${r > 1 ? 's' : ''})` : ''} and earned the title "${t}" in Conveyor Sushi: Hei Omachi! 🍣 #HeiOmachi`,
     copied: 'Copied to clipboard!', copyFail: 'Could not copy.', title: 'Play | Conveyor Sushi: Hei Omachi!',
+    bgm: on => 'Music: ' + (on ? 'ON' : 'OFF'),
+    reviveNote: n => `Watch an ad to call back the customer who just stormed out and keep the shop open. (${n} left)`,
+    reviveWatch: '▶ Watch an ad to call them back', reviveLoading: 'Loading ad…', reviveFail: "Couldn't load an ad.",
+    reviveSkip: s => `Close the shop (${s})`, revived: "I'm back!",
+    revives: n => ` · Called back ${n}`, shareDialog: 'Share your result',
   } : {
     full: 'レーンがいっぱい！', wrong: 'あっ、違った！', waste: '廃棄 −20円', leave: 'もう帰る！', thanks: 'ごちそうさま！',
     combo: n => n + ' コンボ！', shout: 'へいお待ち！', yen: p => p + '円',
@@ -24,8 +29,13 @@
     closed: 'お客さんが怒って閉店…', done: '本日の営業終了！',
     detail: (a, b, c, d) => `提供 ${a} 皿 ／ 最大コンボ ${b} ／ 怒った客 ${c} 人 ／ 廃棄 ${d} 皿`,
     rank: t => '称号：' + t, best: n => `自己ベスト ${n.toLocaleString()}円`,
-    shareText: (n, t) => `「回転寿司へいお待ち！」で売上${n.toLocaleString()}円！称号は「${t}」でした🍣 #へいお待ち`,
+    shareText: (n, t, r) => `「回転寿司へいお待ち！」で売上${n.toLocaleString()}円${r ? `（呼び戻し${r}回）` : ''}！称号は「${t}」でした🍣 #へいお待ち`,
     copied: 'コピーしました！', copyFail: 'コピーできませんでした', title: 'あそぶ｜回転寿司へいお待ち！',
+    bgm: on => 'BGM：' + (on ? 'ON' : 'OFF'),
+    reviveNote: n => `広告を見ると、怒って帰ったお客さんを呼び戻して営業を続けられます（あと${n}回）`,
+    reviveWatch: '▶ 広告を見て呼び戻す', reviveLoading: '広告を読み込み中…', reviveFail: '広告を読み込めませんでした',
+    reviveSkip: s => `閉店する（${s}）`, revived: '戻ってきた！',
+    revives: n => ` ／ 呼び戻し ${n} 回`, shareDialog: '結果をシェア',
   };
 
   const SUSHI = [
@@ -298,11 +308,11 @@
 
   // ===== 状態 =====
   let state = 'title';
-  let elapsed, score, served, angryCount, wasted, combo, maxCombo;
+  let elapsed, score, served, angryCount, wasted, combo, maxCombo, revives = 0, lastAngry = null;
   let offset, slots, spawnTimer, popups, chefShout, wrongFlash;
 
   function reset() {
-    elapsed = 0; score = 0; served = 0; angryCount = 0; wasted = 0; combo = 0; maxCombo = 0;
+    elapsed = 0; score = 0; served = 0; angryCount = 0; wasted = 0; combo = 0; maxCombo = 0; revives = 0; lastAngry = null;
     offset = 0; slots = new Array(SLOT_COUNT).fill(null);
     spawnTimer = 0.6; popups = []; chefShout = 0; wrongFlash = 0;
     SEATS.forEach(s => s.customer = null);
@@ -443,7 +453,7 @@
       } else if (c.state === 'waiting') {
         c.patience -= dt;
         if (c.patience <= 0) {
-          c.state = 'leaving'; c.mood = 'angry'; c.anim = 0;
+          c.state = 'leaving'; c.mood = 'angry'; c.anim = 0; lastAngry = c;
           angryCount++; combo = 0;
           sfx.angry();
           addPopup(seat.x, popY(seat), TX.leave, '#c0392b', 26);
@@ -474,7 +484,11 @@
     popups.forEach(p => p.t += dt);
     popups = popups.filter(p => p.t < 1.2);
 
-    if (elapsed >= GAME_TIME || angryCount >= ANGRY_LIMIT) endGame();
+    if (elapsed >= GAME_TIME) endGame();
+    else if (angryCount >= ANGRY_LIMIT) {
+      // アプリではリワード広告で呼び戻せる。少し待って、帰っていく様子を見届けてから案内する
+      if (canRevive()) { state = 'closing'; closingT = REVIVE_DELAY; } else endGame();
+    }
   }
 
   function takePlate(c, p) {
@@ -958,13 +972,13 @@
     for (let i = 0; i < ANGRY_LIMIT; i++) {
       ellipse(W - 20 - cr - i * gap, 23, cr, cr, i < angryCount ? '#e74c3c' : 'rgba(255,255,255,0.25)');
     }
-    // BGM ON/OFF ボタン
+    // 一時停止ボタン（BGM の切り替えは一時停止画面で）
     const bb = BGM_BTN;
     rrect(bb.x, bb.y, bb.w, bb.h, 10);
-    ctx.fillStyle = BGM.enabled ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)'; ctx.fill();
-    ctx.textAlign = 'center'; ctx.font = 'bold 15px sans-serif';
-    ctx.fillStyle = BGM.enabled ? '#fff' : 'rgba(255,255,255,0.5)';
-    ctx.fillText(BGM.enabled ? '♪ ON' : '♪ OFF', bb.x + bb.w / 2, bb.y + bb.h / 2 + 1);
+    ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fill();
+    ctx.fillStyle = '#fff';
+    const px = bb.x + bb.w / 2, py = bb.y + bb.h / 2;
+    ctx.fillRect(px - 8, py - 8, 5, 16); ctx.fillRect(px + 3, py - 8, 5, 16);
     ctx.restore();
   }
 
@@ -1004,7 +1018,10 @@
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     if (state === 'playing') update(dt);
+    else if (state === 'closing') updateClosing(dt);
+    else if (state === 'revive') updateRevive(dt);
     render();
+    updateBanner();
     requestAnimationFrame(frame);
   }
 
@@ -1018,7 +1035,7 @@
     const r = canvas.getBoundingClientRect();
     const x = (e.clientX - r.left) * W / r.width, y = (e.clientY - r.top) * H / r.height;
     const bb = BGM_BTN;
-    if (x >= bb.x && x <= bb.x + bb.w && y >= bb.y && y <= bb.y + bb.h) { audio(); BGM.toggle(); return; }
+    if (state === 'playing' && x >= bb.x - 6 && x <= bb.x + bb.w + 6 && y >= 0 && y <= bb.y + bb.h + 6) { pauseGame(); return; }
     for (const b of buttons) {
       if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) { pressButton(b); return; }
     }
@@ -1027,34 +1044,50 @@
     if (e.target && e.target.tagName === 'INPUT') return;
     const b = buttons.find(b => b.sushi.key === e.key);
     if (b) pressButton(b);
-    if ((e.key === 'Enter' || e.key === ' ') && state !== 'playing') start();
-    if (e.key === 'm' || e.key === 'M') { audio(); BGM.toggle(); }
+    if (e.key === 'Enter' || e.key === ' ') {
+      if (state === 'title' && !titleEl.classList.contains('hidden')) { audio(); withInterstitial(start); }
+      else if (state === 'result') { audio(); withInterstitial(start); }
+    }
+    if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+      if (state === 'playing') pauseGame(); else if (state === 'paused') resumeGame();
+    }
+    if (e.key === 'm' || e.key === 'M') { audio(); BGM.toggle(); updateBgmLabel(); }
   });
+  // 裏に回ったら一時停止して音を止める（広告の表示中は広告側が音を止めている）
   document.addEventListener('visibilitychange', () => {
     last = performance.now();
-    if (!actx) return;
-    if (document.hidden) actx.suspend(); else actx.resume();
+    if (document.hidden) {
+      if (state === 'playing') pauseGame();
+      Sound.suspend();
+    } else if (!Ads.showing) {
+      Sound.resume();
+    }
   });
 
   // ===== 画面遷移 =====
   const titleEl = document.getElementById('title');
   const resultEl = document.getElementById('result');
+  const $ = id => document.getElementById(id);
+  const VIEWS = ['title', 'howtoView', 'rankView', 'pause', 'revive', 'result'];
+  function show(id) { VIEWS.forEach(v => $(v).classList.toggle('hidden', v !== id)); }
   function start() {
     audio();
     reset();
     state = 'playing';
     BGM.start(bgmTempo);
-    titleEl.classList.add('hidden');
-    resultEl.classList.add('hidden');
+    if (actx) actx.resume();
+    last = performance.now();
+    show(null);
   }
   function endGame() {
     state = 'result';
+    show(null);
     const closed = angryCount >= ANGRY_LIMIT;
     BGM.stop();
     BGM.jingle(!closed);
     document.getElementById('resultTitle').textContent = closed ? TX.closed : TX.done;
     document.getElementById('resultScore').textContent = score.toLocaleString();
-    document.getElementById('resultDetail').textContent = TX.detail(served, maxCombo, angryCount, wasted);
+    document.getElementById('resultDetail').textContent = TX.detail(served, maxCombo, angryCount, wasted) + (revives ? TX.revives(revives) : '');
     document.getElementById('resultRank').textContent = TX.rank(Ranking.title(score));
     shareMsg.textContent = '';
     // ランキング
@@ -1093,7 +1126,7 @@
 
   // ===== シェア =====
   const shareMsg = document.getElementById('shareMsg');
-  const shareText = () => TX.shareText(score, Ranking.title(score));
+  const shareText = () => TX.shareText(score, Ranking.title(score), revives);
   const openWin = url => window.open(url, '_blank', 'noopener');
   document.getElementById('shareX').addEventListener('click', () => {
     openWin('https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText()) + '&url=' + encodeURIComponent(SHARE_URL));
@@ -1125,8 +1158,177 @@
   }
   // 共有メニューが使えない環境では「リンクをコピー」に
   if (!navigator.share) moreBtn.textContent = EN ? 'Copy link' : 'リンクをコピー';
-  document.getElementById('startBtn').addEventListener('click', start);
-  document.getElementById('retryBtn').addEventListener('click', start);
+  // ===== 音（広告の表示中や一時停止中は止める） =====
+  window.Sound = {
+    suspend() { if (actx) actx.suspend(); },
+    resume() { if (actx && !document.hidden && state !== 'paused') actx.resume(); },
+  };
+
+  // ===== アプリ（Android / Capacitor）のときだけ使う機能 =====
+  // Web 版では Capacitor がないので何もしない
+  const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  const plugin = name => (NATIVE && window.Capacitor.Plugins ? window.Capacitor.Plugins[name] : null);
+  const Ads = window.Ads || { available: false, canReward: false, showing: false, initDone: Promise.resolve(), showInterstitial: async () => {}, showRewarded: async () => 'unavailable', setBanner() {}, showPrivacyOptions: async () => {} };
+  document.body.classList.add(NATIVE ? 'app' : 'web');
+
+  // 全画面広告：「開店する（トップ・あそびかたから）」「トップに戻る（あそびかた・ポーズ・結果から）」
+  // 「ポーズからの再開」「結果画面のもう一度」のたびに、毎回出す
+  let adBusy = false;
+  async function withInterstitial(next) {
+    if (adBusy) return;
+    if (Ads.available) {
+      adBusy = true;
+      await Ads.showInterstitial(3000);
+      adBusy = false;
+    }
+    next();
+  }
+  function goTop() {
+    BGM.stop();
+    state = 'title';
+    SEATS.forEach(s => s.customer = null);
+    popups = []; wrongFlash = 0; chefShout = 0;
+    setupTitleDeco();
+    updateBest();
+    show('title');
+  }
+
+  // 一時停止
+  const bgmBtn = $('bgmBtn');
+  function updateBgmLabel() { bgmBtn.textContent = TX.bgm(BGM.enabled); }
+  function pauseGame() {
+    if (state !== 'playing') return;
+    state = 'paused';
+    Sound.suspend();
+    updateBgmLabel();
+    show('pause');
+  }
+  function resumeGame() {
+    if (state !== 'paused') return;
+    audio();
+    withInterstitial(() => {
+      if (state !== 'paused') return;
+      state = 'playing';
+      show(null);
+      last = performance.now();
+      Sound.resume();
+    });
+  }
+  $('resumeBtn').addEventListener('click', resumeGame);
+  bgmBtn.addEventListener('click', () => { BGM.toggle(); updateBgmLabel(); });
+  $('pauseTop').addEventListener('click', () => { audio(); withInterstitial(goTop); });
+
+  // 開店・もう一度
+  $('startBtn').addEventListener('click', () => { audio(); withInterstitial(start); });
+  $('howtoPlay').addEventListener('click', () => { audio(); withInterstitial(start); });
+  $('retryBtn').addEventListener('click', () => { audio(); withInterstitial(start); });
+  $('resultTop').addEventListener('click', () => { audio(); withInterstitial(goTop); });
+
+  // あそびかた・ランキング（アプリ内の画面）
+  $('howtoBtn').addEventListener('click', () => show('howtoView'));
+  $('howtoBack').addEventListener('click', () => { audio(); withInterstitial(goTop); });
+  $('rankBtn').addEventListener('click', () => { Ranking.render($('rankViewBox')); show('rankView'); });
+  $('rankBack').addEventListener('click', () => show('title'));
+
+  // ===== リワード広告のチート：怒って帰ったお客さんを呼び戻す（アプリのみ・1 ゲーム 3 回まで） =====
+  // 5 人目を怒らせて閉店になるときだけ案内する。最後まで見たら、そのお客さんが戻ってきて営業を続けられる
+  const REVIVE_DELAY = 2.5;   // 帰っていく様子を見届けてから出す
+  const REVIVE_WAIT = 6;      // 何もしなければ自動で閉店
+  const REVIVE_MAX = 3;
+  let closingT = 0, reviveT = 0, reviveBusy = false;
+  function canRevive() { return Ads.canReward && revives < REVIVE_MAX && lastAngry; }
+  function updateClosing(dt) {
+    // 帰っていくお客さんのアニメーションとポップアップだけ進める
+    for (const seat of SEATS) {
+      const c = seat.customer; if (!c || c.state !== 'leaving') continue;
+      c.anim += dt;
+      if (c.anim > 0.6) seat.customer = null;
+    }
+    popups.forEach(p => p.t += dt);
+    popups = popups.filter(p => p.t < 1.2);
+    closingT -= dt;
+    if (closingT <= 0) showRevive();
+  }
+  function showRevive() {
+    state = 'revive';
+    reviveT = REVIVE_WAIT; reviveBusy = false;
+    $('reviveNote').textContent = TX.reviveNote(REVIVE_MAX - revives);
+    $('reviveWatch').disabled = false;
+    $('reviveWatch').textContent = TX.reviveWatch;
+    $('reviveSkip').textContent = TX.reviveSkip(REVIVE_WAIT);
+    show('revive');
+  }
+  function updateRevive(dt) {
+    if (reviveBusy) return;
+    reviveT -= dt;
+    $('reviveSkip').textContent = TX.reviveSkip(Math.max(0, Math.ceil(reviveT)));
+    if (reviveT <= 0) endGame();
+  }
+  $('reviveSkip').addEventListener('click', () => { if (state === 'revive' && !reviveBusy) endGame(); });
+  $('reviveWatch').addEventListener('click', async () => {
+    if (state !== 'revive' || reviveBusy) return;
+    reviveBusy = true;
+    $('reviveWatch').disabled = true;
+    $('reviveWatch').textContent = TX.reviveLoading;
+    const result = await Ads.showRewarded();
+    if (state !== 'revive') return;
+    if (result === 'unavailable') {
+      $('reviveNote').textContent = TX.reviveFail;
+      setTimeout(() => { if (state === 'revive') endGame(); }, 2000);
+      return;
+    }
+    if (result !== 'rewarded') { endGame(); return; }
+    // 最後に怒って帰ったお客さんが、同じ席に同じ注文で戻ってくる
+    const c = lastAngry, seat = c.seat;
+    if (!seat.customer || seat.customer === c) {
+      seat.customer = c;
+      Object.assign(c, { state: 'arriving', anim: 0, patience: c.patienceMax, mood: 'happy' });
+      addPopup(seat.x, popY(seat), TX.revived, '#27ae60', 24);
+    }
+    angryCount--; revives++; lastAngry = null;
+    state = 'playing';
+    show(null);
+    last = performance.now();
+    Sound.resume();
+  });
+
+  // ===== バナー広告：トップ・あそびかた・ポーズ・結果画面だけ（プレイ中はボタンと重なるので出さない） =====
+  function updateBanner() {
+    if (!Ads.available) return;
+    const vis = id => !$(id).classList.contains('hidden');
+    Ads.setBanner(!adBusy && (vis('title') || vis('howtoView') || state === 'paused' || state === 'result'));
+  }
+
+  // Android の戻るボタン：プレイ中はポーズ（ポーズ中なら再開）、トップと結果画面ではアプリを閉じる
+  if (plugin('App')) {
+    plugin('App').addListener('backButton', () => {
+      if (adBusy || Ads.showing) return;
+      if (state === 'playing') pauseGame();
+      else if (state === 'paused') resumeGame();
+      else if (state === 'revive') { if (!reviveBusy) endGame(); }
+      else if (state === 'closing') { /* 少し待つ */ }
+      else if (!$('howtoView').classList.contains('hidden')) withInterstitial(goTop);
+      else if (!$('rankView').classList.contains('hidden')) show('title');
+      else plugin('App').exitApp();
+    });
+  }
+
+  // アプリのシェア：Android の共有メニューを出す
+  $('shareApp').addEventListener('click', async () => {
+    const Share = plugin('Share');
+    if (!Share) return;
+    try { await Share.share({ title: document.title, text: shareText(), url: SHARE_URL, dialogTitle: TX.shareDialog }); } catch (e) { /* キャンセル */ }
+  });
+
+  // テスト・ストア画像の撮影用：待っているお客さんの注文（キー）を返す
+  window.SushiTest = {
+    orders: () => SEATS.map(s => s.customer).filter(c => c && (c.state === 'waiting' || c.state === 'arriving')).map(c => c.order.key),
+  };
+
+  // トップ画面の下に、バージョン（アプリ版）・プライバシーポリシー・広告の設定（EU など）を出す
+  if (window.APP_VERSION && window.APP_VERSION !== 'dev') $('buildInfo').textContent = window.APP_VERSION + ' ｜';
+  Ads.initDone.then(() => { if (Ads.privacyOptionsRequired) $('adPrivacy').hidden = false; });
+  $('adPrivacyLink').addEventListener('click', e => { e.preventDefault(); Ads.showPrivacyOptions(); });
 
   // タイトル画面用の飾り
   slots = new Array(SLOT_COUNT).fill(null);

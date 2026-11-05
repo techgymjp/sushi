@@ -2,26 +2,86 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>あそぶ｜回転寿司へいお待ち！</title>
+<meta name="theme-color" content="#2b1d14">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="wrap">
   <canvas id="game"></canvas>
 
+  <!-- タイトル -->
   <div id="title" class="overlay">
     <div class="panel">
       <h1 data-en="Conveyor Sushi<br><span>Hei Omachi!</span>">回転寿司<br><span>へいお待ち！</span></h1>
       <p class="lead" data-en="Check the sushi above each customer's head,<br>then tap the button below — &quot;Coming up!&quot;">お客さんの頭の上の寿司を見て、<br>下のボタンで「へいお待ち！」</p>
-      <p class="keys" data-en="Keyboard: 1–5 top row / 6–9, 0 bottom row / M toggle music">キーボード：1〜5 上段 ／ 6〜9・0 下段 ／ M BGM切替</p>
+      <p class="keys" data-en="Keyboard: 1–5 top row / 6–9, 0 bottom row / P pause">キーボード：1〜5 上段 ／ 6〜9・0 下段 ／ P 一時停止</p>
       <p class="best" id="bestScore"></p>
       <button id="startBtn" class="btn" data-en="Open the shop!">開店する</button>
-      <p class="links"><a href="ranking.html" data-en="Ranking" data-en-href="en/ranking.html">ランキング</a> ／ <a href="howto.html" data-en="How to play" data-en-href="en/howto.html">遊び方</a> ／ <a href="index.html" data-en="Home" data-en-href="en/">トップへ</a></p>
+      <div class="menu-row app-only">
+        <button id="howtoBtn" class="btn sub" type="button" data-en="How to play">あそびかた</button>
+        <button id="rankBtn" class="btn sub" type="button" data-en="Ranking">ランキング</button>
+      </div>
+      <p class="links web-only"><a href="ranking.html" data-en="Ranking" data-en-href="en/ranking.html">ランキング</a> ／ <a href="howto.html" data-en="How to play" data-en-href="en/howto.html">遊び方</a> ／ <a href="index.html" data-en="Home" data-en-href="en/">トップへ</a></p>
       <p class="lang"><a href="?lang=en" data-en="日本語" data-en-href="?lang=ja">English</a></p>
+      <p class="legal app-only">
+        <span id="buildInfo"></span>
+        <a href="https://techgym.jp/privacy-policy/" data-en-href="https://techgym.jp/privacy-policy-en/" target="_blank" rel="noopener" data-en="Privacy policy">プライバシーポリシー</a>
+        <span id="adPrivacy" hidden>｜<a href="#" id="adPrivacyLink" data-en="Ad settings">広告の設定</a></span>
+      </p>
     </div>
   </div>
 
+  <!-- あそびかた（アプリ） -->
+  <div id="howtoView" class="overlay hidden">
+    <div class="panel howto-panel">
+      <h2 data-en="How to play">あそびかた</h2>
+      <ol class="howto-list">
+        <li data-en="The sushi each customer wants appears in the <b>bubble above their head</b>. The bar shows how long they'll wait.">お客さんの<b>頭の上の吹き出し</b>に、食べたい寿司が出ます。バーは待ってくれる時間です。</li>
+        <li data-en="Tap a <b>sushi button</b> and the plate goes onto the belt right in front of a customer who wants it.">下の<b>ネタのボタン</b>を押すと、その寿司を食べたいお客さんの前のレーンに皿が置かれます。</li>
+        <li data-en="If a plate is already in front of them, yours goes into the <b>next empty spot behind it</b>.">目の前に皿があるときは、その<b>後ろの空いているところ</b>に置かれます。</li>
+        <li data-en="Customers only take <b>the plate passing right in front of them</b>.">お客さんが取れるのは<b>目の前に流れてきた皿だけ</b>です。</li>
+        <li data-en="Wrong plates keep going around. After 2 laps they're thrown away (−¥20).">間違えた皿はそのまま回り続け、2周すると廃棄（−20円）。</li>
+        <li data-en="Keep customers waiting too long and they leave angry. <b>5 angry customers and the shop closes!</b>">待たせすぎると怒って帰ります。<b>5人怒らせたら閉店！</b></li>
+      </ol>
+      <p class="howto-note" data-en="Fast service earns a bonus, and serving in a row builds a combo. Make as many sales as you can in 90 seconds!">早く出すとボーナス、続けて出すとコンボで売上アップ。90秒でたくさん売り上げよう！</p>
+      <button id="howtoPlay" class="btn" type="button" data-en="Open the shop!">開店する</button>
+      <p><button id="howtoBack" class="btn sub small" type="button" data-en="Back to top">トップに戻る</button></p>
+    </div>
+  </div>
+
+  <!-- ランキング（アプリ） -->
+  <div id="rankView" class="overlay hidden">
+    <div class="panel">
+      <h2 data-en="Ranking">ランキング</h2>
+      <div id="rankViewBox" class="rank-box"></div>
+      <p class="rank-note" data-en="Saved on this device.">記録はこの端末に保存されます。</p>
+      <button id="rankBack" class="btn sub small" type="button" data-en="Back">もどる</button>
+    </div>
+  </div>
+
+  <!-- 一時停止 -->
+  <div id="pause" class="overlay hidden">
+    <div class="panel">
+      <h2 data-en="Paused">一時停止</h2>
+      <button id="resumeBtn" class="btn" type="button" data-en="Resume">再開する</button>
+      <p><button id="bgmBtn" class="btn sub small" type="button"></button></p>
+      <p><button id="pauseTop" class="btn sub small" type="button" data-en="Back to top">トップに戻る</button></p>
+    </div>
+  </div>
+
+  <!-- 怒って帰ったお客さんを呼び戻す（アプリのリワード広告） -->
+  <div id="revive" class="overlay hidden">
+    <div class="panel">
+      <h2 data-en="Closing time?">閉店…？</h2>
+      <p class="revive-note" id="reviveNote"></p>
+      <button id="reviveWatch" class="btn" type="button"></button>
+      <p><button id="reviveSkip" class="btn sub small" type="button"></button></p>
+    </div>
+  </div>
+
+  <!-- 結果 -->
   <div id="result" class="overlay hidden">
     <div class="panel">
       <h2 id="resultTitle">閉店！</h2>
@@ -38,19 +98,26 @@
       <div id="rankBox" class="rank-box"></div>
       <div class="share">
         <p class="share-label" data-en="Share your result">結果をシェア</p>
-        <div class="share-row">
+        <div class="share-row web-only">
           <button type="button" id="shareX" class="share-btn x" aria-label="X">𝕏 <span data-en="Post">ポスト</span></button>
           <button type="button" id="shareLine" class="share-btn line">LINE</button>
           <button type="button" id="shareMore" class="share-btn more" data-en="More">その他</button>
         </div>
+        <div class="share-row app-only">
+          <button type="button" id="shareApp" class="share-btn x" data-en="📤 Share">📤 シェアする</button>
+        </div>
         <p id="shareMsg" class="share-msg" aria-live="polite"></p>
       </div>
       <button id="retryBtn" class="btn" data-en="Play again">もう一度</button>
-      <p class="links"><a href="ranking.html" data-en="Ranking" data-en-href="en/ranking.html">ランキング</a> ／ <a href="howto.html" data-en="How to play" data-en-href="en/howto.html">遊び方</a> ／ <a href="index.html" data-en="Home" data-en-href="en/">トップへ</a></p>
+      <p class="app-only"><button id="resultTop" class="btn sub small" type="button" data-en="Back to top">トップに戻る</button></p>
+      <p class="links web-only"><a href="ranking.html" data-en="Ranking" data-en-href="en/ranking.html">ランキング</a> ／ <a href="howto.html" data-en="How to play" data-en-href="en/howto.html">遊び方</a> ／ <a href="index.html" data-en="Home" data-en-href="en/">トップへ</a></p>
     </div>
   </div>
 </div>
 <script src="i18n.js"></script>
+<script src="build-info.js"></script>
+<script src="ads-config.js"></script>
+<script src="ads.js"></script>
 <script src="ranking.js"></script>
 <script src="game.js"></script>
 </body>

@@ -1,0 +1,8 @@
+{
+  "appId": "jp.techgym.sushi",
+  "appName": "へいお待ち",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#2b1d14"
+  }
+}

@@ -28,7 +28,7 @@ jobs:
       - name: Prepare site
         run: |
           mkdir -p _site
-          cp index.html howto.html game.html ranking.html style.css pages.css game.js ranking.js i18n.js .nojekyll _site/
+          cp index.html howto.html game.html ranking.html style.css pages.css game.js ranking.js i18n.js ads.js ads-config.js build-info.js .nojekyll _site/
           cp -r assets en _site/
       - uses: actions/upload-pages-artifact@v3
         with:

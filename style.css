@@ -94,3 +94,27 @@ table.ranking { width: 100%; border-collapse: collapse; font-size: 15px; backgro
 .share-btn:active { transform: translateY(2px); }
 .share-msg { min-height: 1.2em; margin: 6px 0 0; font-size: 13px; color: #27ae60; }
 @media (hover: none) and (pointer: coarse) { .keys { display: none; } }
+
+/* ===== Web 版とアプリ版で出し分け ===== */
+body.web .app-only { display: none !important; }
+body.app .web-only { display: none !important; }
+body.app .keys { display: none; }
+/* アプリではバナー広告（画面の下中央）と重ならないよう、下に余白をとる */
+body.app .overlay { padding-bottom: 66px; }
+
+.btn.sub { background: #fff; color: #a5462b; box-shadow: 0 5px 0 #d8c4a4; border: 2px solid #ead7b5; }
+.btn.sub:active { box-shadow: 0 2px 0 #d8c4a4; }
+.menu-row { display: flex; gap: 10px; justify-content: center; margin: 16px 0 4px; flex-wrap: wrap; }
+.menu-row .btn { font-size: 18px; padding: 10px 22px; }
+.legal { margin: 12px 0 0; font-size: 12px; color: #7a5a40; }
+.legal a { color: #7a5a40; }
+.howto-panel h2 { margin-bottom: 10px; }
+.howto-list { text-align: left; padding-left: 1.4em; margin: 0 0 10px; font-size: 17px; line-height: 1.6; }
+.howto-list li { margin-bottom: 6px; }
+.howto-list b { color: #c0392b; }
+.howto-note { font-size: 15px; color: #7a5a40; margin: 0 0 14px; }
+.rank-note { font-size: 13px; color: #7a5a40; margin: 0 0 12px; }
+.revive-note { font-size: 17px; line-height: 1.6; margin: 0 0 16px; }
+#pause .btn, #revive .btn { min-width: 240px; }
+#pause p, #revive p, #howtoView p { margin: 14px 0 0; }
+.btn:disabled { opacity: .6; }
