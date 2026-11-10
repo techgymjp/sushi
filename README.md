@@ -56,13 +56,16 @@ https://techgymjp.github.io/sushi/
 
 ## Android アプリ
 
+Google Play: https://play.google.com/store/apps/details?id=jp.techgym.sushi
+（Web 版のゲームのタイトル画面・トップ・遊び方・各ページのフッターからリンク。アプリには入れない）
+
 [Capacitor](https://capacitorjs.com/) でゲームのファイルをアプリに同梱し、Android アプリにしています（オフラインで遊べます）。
 構成は techgymjp/jet-fighter の `docs/ANDROID_PORTING.md`、techgymjp/jackal と同じです。
 
 - パッケージ名: `jp.techgym.sushi`
 - アプリ名: ストアは「回転寿司へいお待ち！」（英語 Conveyor Sushi: Hei Omachi!）、ホーム画面は「へいお待ち」（英語の端末では Hei Omachi）
 - 縦画面固定・全画面・プレイ中は画面を消さない
-- アプリでは `game.html` をそのまま `index.html` として使い、トップ画面に「開店する」「あそびかた」「ランキング」を出す（あそびかた・ランキングはアプリ内の画面）
+- アプリでは `game.html` を `index.html` として使う。Web 版だけの部分（Google Play へのリンク）は `<!-- web-only -->` … `<!-- /web-only -->` で囲み、`scripts/build-web.js` がアプリ用のコピーから取り除く（ストアへのリンクが残っていたらビルドを止める）。トップ画面に「開店する」「あそびかた」「ランキング」を出す（あそびかた・ランキングはアプリ内の画面）
 - 戻るボタン: プレイ中は一時停止（一時停止中なら再開）、あそびかたはトップへ、トップ・結果画面ではアプリを終了
 - 別アプリに切り替えると自動で一時停止して音を止める
 - シェアは Android の共有メニュー

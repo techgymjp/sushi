@@ -167,3 +167,11 @@ button.btn { border: none; font-family: inherit; cursor: pointer; }
   .ranking td, .ranking th { padding: 8px 6px; font-size: 14px; }
 }
 .nav a.lang-link { border: 2px solid rgba(255,255,255,0.6); padding: 2px 10px; }
+
+/* Google Play（Android アプリ）へのリンク */
+.play-link { margin: 18px 0 0; font-weight: 700; }
+.play-link a { color: var(--brown); }
+.hero .play-link { text-align: left; }
+.cta .play-link { text-align: center; }
+.site-footer .tm { margin: 8px 0 0; font-size: 12px; opacity: .8; }
+@media (max-width: 760px) { .hero .play-link { text-align: center; } }

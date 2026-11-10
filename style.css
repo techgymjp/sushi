@@ -118,3 +118,5 @@ body.app .overlay { padding-bottom: 66px; }
 #pause .btn, #revive .btn { min-width: 240px; }
 #pause p, #revive p, #howtoView p { margin: 14px 0 0; }
 .btn:disabled { opacity: .6; }
+.play-link { margin: 12px 0 0; font-size: 15px; font-weight: bold; }
+.play-link a { color: #a5462b; }
