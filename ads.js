@@ -15,7 +15,7 @@ window.Ads = (() => {
       // AdMob で作ったら ID を入れる。空の種類は本番ビルド(Google Play 用)では出さない
       production: {
         interstitial: 'ca-app-pub-6411535997477460/5813686492',
-        rewarded: 'ca-app-pub-6411535997477460/3789156363',
+        rewarded: 'ca-app-pub-6411535997477460/8917140790',
         banner: 'ca-app-pub-6411535997477460/9725011344',
       },
     },
