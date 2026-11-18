@@ -33,6 +33,10 @@
         </provider>
     </application>
 
+    <!-- 縦画面に固定しているが、縦画面の端末であることは必須にしない
+         （screenOrientation から Google Play が「縦画面が必須」と判断して、配信できる端末を絞らないように） -->
+    <uses-feature android:name="android.hardware.screen.portrait" android:required="false" />
+
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
