@@ -14,7 +14,7 @@ window.Ads = (() => {
       // 本番の広告ユニット(AdMob の Android アプリ「回転寿司へいお待ち！」)。
       // AdMob で作ったら ID を入れる。空の種類は本番ビルド(Google Play 用)では出さない
       production: {
-        interstitial: 'ca-app-pub-6411535997477460/7728401379',
+        interstitial: 'ca-app-pub-6411535997477460/5813686492',
         rewarded: 'ca-app-pub-6411535997477460/3789156363',
         banner: 'ca-app-pub-6411535997477460/9725011344',
       },
